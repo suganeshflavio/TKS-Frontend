@@ -437,6 +437,7 @@ export default function CoursePage() {
       <Modal
         title={editingId ? "Edit Course" : "Add Course"}
         open={open}
+        maskClosable={false}
         onCancel={resetModal}
         onOk={() => form.submit()}
         confirmLoading={isCreating || isUpdating || isLoadingCourseDetail}

@@ -749,6 +749,7 @@ export default function Userlist() {
       <Modal
         title={editingId ? "Edit User" : "Add User"}
         open={open}
+        maskClosable={false}
         onCancel={resetModal}
         onOk={() => form.submit()}
         confirmLoading={isCreating || isUpdating || isLoadingUserDetail}

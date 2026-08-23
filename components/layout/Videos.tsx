@@ -784,6 +784,7 @@ export default function Videos() {
       <Modal
         title={editingId ? "Edit Video" : "Add Video"}
         open={open}
+        maskClosable={false}
         width={700}
         // height={500}
         onCancel={resetModal}
