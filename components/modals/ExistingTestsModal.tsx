@@ -46,20 +46,35 @@ type TestCardProps = {
   readonly onRefresh: () => Promise<void>;
 };
 
-function TestCard({ test, onDeleteTest, onViewAttempts, onRefresh }: TestCardProps) {
+function TestCard({
+  test,
+  onDeleteTest,
+  onViewAttempts,
+  onRefresh,
+}: TestCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [editingTest, setEditingTest] = useState(false);
   const [draftTestName, setDraftTestName] = useState(test.testName ?? "");
   const [draftMarks, setDraftMarks] = useState(test.marksPerQuestion ?? 1);
-  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
-  const [draftQuestion, setDraftQuestion] = useState<Partial<TestQuestion> | null>(null);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(
+    null,
+  );
+  const [draftQuestion, setDraftQuestion] =
+    useState<Partial<TestQuestion> | null>(null);
 
   const [updateTest, { isLoading: isUpdatingTest }] = useUpdateTestMutation();
-  const [addQuestion, { isLoading: isAddingQuestion }] = useAddQuestionMutation();
-  const [updateQuestion, { isLoading: isUpdatingQuestion }] = useUpdateQuestionMutation();
-  const [deleteQuestion, { isLoading: isDeletingQuestion }] = useDeleteQuestionMutation();
+  const [addQuestion, { isLoading: isAddingQuestion }] =
+    useAddQuestionMutation();
+  const [updateQuestion, { isLoading: isUpdatingQuestion }] =
+    useUpdateQuestionMutation();
+  const [deleteQuestion, { isLoading: isDeletingQuestion }] =
+    useDeleteQuestionMutation();
   const [deleteTest, { isLoading: isDeletingTest }] = useDeleteTestMutation();
-  const { data: fullTest, refetch: refetchTest, isFetching: isFetchingQuestions } = useGetTestByIdQuery(test.id, { skip: !expanded || !test.id });
+  const {
+    data: fullTest,
+    refetch: refetchTest,
+    isFetching: isFetchingQuestions,
+  } = useGetTestByIdQuery(test.id, { skip: !expanded || !test.id });
   const detailQuestions = useMemo(() => fullTest?.questions ?? [], [fullTest]);
 
   useEffect(() => {
@@ -169,11 +184,22 @@ function TestCard({ test, onDeleteTest, onViewAttempts, onRefresh }: TestCardPro
 
   return (
     <Card size="small">
-      <Space align="center" style={{ display: "flex", justifyContent: "space-between", width: "100%" }} wrap>
+      <Space
+        align="center"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          width: "100%",
+        }}
+        wrap
+      >
         <div>
-          <Title level={5} style={{ marginBottom: 4 }}>{test.testName ?? "Untitled Test"}</Title>
+          <Title level={5} style={{ marginBottom: 4 }}>
+            {test.testName ?? "Untitled Test"}
+          </Title>
           <Text type="secondary">
-            Questions: {test._count?.questions ?? test.questions?.length ?? 0} • Marks: {test.marksPerQuestion ?? 1}
+            Questions: {test._count?.questions ?? test.questions?.length ?? 0} •
+            Marks: {test.marksPerQuestion ?? 1}
           </Text>
           <div style={{ marginTop: 8 }}>
             <Tag color="blue">{test._count?.attempts ?? 0} attempts</Tag>
@@ -183,10 +209,20 @@ function TestCard({ test, onDeleteTest, onViewAttempts, onRefresh }: TestCardPro
           <Button size="small" onClick={() => setExpanded((prev) => !prev)}>
             {expanded ? "Hide" : "View"}
           </Button>
-          <Button size="small" icon={<EyeOutlined />} onClick={() => onViewAttempts?.(test.id, test.testName)}>
+          <Button
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => onViewAttempts?.(test.id, test.testName)}
+          >
             Attempts
           </Button>
-          <Button size="small" danger icon={<DeleteOutlined />} loading={isDeletingTest} onClick={() => onDeleteTest(test.id)}>
+          <Button
+            size="small"
+            danger
+            icon={<DeleteOutlined />}
+            loading={isDeletingTest}
+            onClick={() => onDeleteTest(test.id)}
+          >
             Delete Test
           </Button>
         </Space>
@@ -195,10 +231,22 @@ function TestCard({ test, onDeleteTest, onViewAttempts, onRefresh }: TestCardPro
       {expanded ? (
         <div style={{ marginTop: 16, display: "grid", gap: 16 }}>
           <Card size="small">
-            <Space style={{ display: "flex", justifyContent: "space-between", width: "100%" }} align="center" wrap>
+            <Space
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                width: "100%",
+              }}
+              align="center"
+              wrap
+            >
               <Text strong>Test details</Text>
               {!editingTest ? (
-                <Button size="small" icon={<EditOutlined />} onClick={() => setEditingTest(true)}>
+                <Button
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={() => setEditingTest(true)}
+                >
                   Edit Test
                 </Button>
               ) : null}
@@ -219,7 +267,11 @@ function TestCard({ test, onDeleteTest, onViewAttempts, onRefresh }: TestCardPro
                 />
                 <Space>
                   <Button onClick={() => setEditingTest(false)}>Cancel</Button>
-                  <Button type="primary" loading={isUpdatingTest} onClick={() => void handleSaveTest()}>
+                  <Button
+                    type="primary"
+                    loading={isUpdatingTest}
+                    onClick={() => void handleSaveTest()}
+                  >
                     Save Test
                   </Button>
                 </Space>
@@ -228,14 +280,24 @@ function TestCard({ test, onDeleteTest, onViewAttempts, onRefresh }: TestCardPro
               <div style={{ marginTop: 12 }}>
                 <Text>{test.testName ?? "Untitled Test"}</Text>
                 <div>
-                  <Text type="secondary">Marks per question: {test.marksPerQuestion ?? 1}</Text>
+                  <Text type="secondary">
+                    Marks per question: {test.marksPerQuestion ?? 1}
+                  </Text>
                 </div>
               </div>
             )}
           </Card>
 
           <Card size="small">
-            <Space style={{ display: "flex", justifyContent: "space-between", width: "100%" }} align="center" wrap>
+            <Space
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                width: "100%",
+              }}
+              align="center"
+              wrap
+            >
               <Text strong>Questions</Text>
               {/* <Button type="dashed" onClick={() => void handleAddQuestion()} loading={isAddingQuestion}>
                 Add Question
@@ -243,45 +305,98 @@ function TestCard({ test, onDeleteTest, onViewAttempts, onRefresh }: TestCardPro
             </Space>
             <div style={{ marginTop: 12, display: "grid", gap: 12 }}>
               {isFetchingQuestions ? (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 80 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: 80,
+                  }}
+                >
                   <Spin />
                 </div>
               ) : detailQuestions.length === 0 ? (
                 <Text type="secondary">No questions yet.</Text>
               ) : (
                 detailQuestions.map((question) => (
-                  <div key={question.id ?? `${test.id}-${question.question}`} style={{ border: "1px solid #f0f0f0", borderRadius: 8, padding: 12 }}>
+                  <div
+                    key={question.id ?? `${test.id}-${question.question}`}
+                    style={{
+                      border: "1px solid #f0f0f0",
+                      borderRadius: 8,
+                      padding: 12,
+                    }}
+                  >
                     {editingQuestionId === question.id ? (
                       <div style={{ display: "grid", gap: 12 }}>
                         <Input.TextArea
                           rows={2}
                           value={draftQuestion?.question ?? ""}
-                          onChange={(event) => setDraftQuestion((prev) => ({ ...(prev ?? {}), question: event.target.value }))}
+                          onChange={(event) =>
+                            setDraftQuestion((prev) => ({
+                              ...(prev ?? {}),
+                              question: event.target.value,
+                            }))
+                          }
                           placeholder="Question"
                         />
-                        <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
+                        <div
+                          style={{
+                            display: "grid",
+                            gap: 12,
+                            gridTemplateColumns:
+                              "repeat(auto-fit, minmax(200px, 1fr))",
+                          }}
+                        >
                           <Input
                             value={draftQuestion?.optionA ?? ""}
-                            onChange={(event) => setDraftQuestion((prev) => ({ ...(prev ?? {}), optionA: event.target.value }))}
+                            onChange={(event) =>
+                              setDraftQuestion((prev) => ({
+                                ...(prev ?? {}),
+                                optionA: event.target.value,
+                              }))
+                            }
                             placeholder="Option A"
                           />
                           <Input
                             value={draftQuestion?.optionB ?? ""}
-                            onChange={(event) => setDraftQuestion((prev) => ({ ...(prev ?? {}), optionB: event.target.value }))}
+                            onChange={(event) =>
+                              setDraftQuestion((prev) => ({
+                                ...(prev ?? {}),
+                                optionB: event.target.value,
+                              }))
+                            }
                             placeholder="Option B"
                           />
                           <Input
                             value={draftQuestion?.optionC ?? ""}
-                            onChange={(event) => setDraftQuestion((prev) => ({ ...(prev ?? {}), optionC: event.target.value }))}
+                            onChange={(event) =>
+                              setDraftQuestion((prev) => ({
+                                ...(prev ?? {}),
+                                optionC: event.target.value,
+                              }))
+                            }
                             placeholder="Option C"
                           />
                           <Input
                             value={draftQuestion?.optionD ?? ""}
-                            onChange={(event) => setDraftQuestion((prev) => ({ ...(prev ?? {}), optionD: event.target.value }))}
+                            onChange={(event) =>
+                              setDraftQuestion((prev) => ({
+                                ...(prev ?? {}),
+                                optionD: event.target.value,
+                              }))
+                            }
                             placeholder="Option D"
                           />
                         </div>
-                        <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
+                        <div
+                          style={{
+                            display: "grid",
+                            gap: 12,
+                            gridTemplateColumns:
+                              "repeat(auto-fit, minmax(200px, 1fr))",
+                          }}
+                        >
                           <Select
                             value={draftQuestion?.correctOption ?? "A"}
                             options={[
@@ -290,31 +405,56 @@ function TestCard({ test, onDeleteTest, onViewAttempts, onRefresh }: TestCardPro
                               { label: "C", value: "C" },
                               { label: "D", value: "D" },
                             ]}
-                            onChange={(value) => setDraftQuestion((prev) => ({ ...(prev ?? {}), correctOption: value }))}
+                            onChange={(value) =>
+                              setDraftQuestion((prev) => ({
+                                ...(prev ?? {}),
+                                correctOption: value,
+                              }))
+                            }
                           />
                           <Input.TextArea
                             rows={2}
                             value={draftQuestion?.explanation ?? ""}
-                            onChange={(event) => setDraftQuestion((prev) => ({ ...(prev ?? {}), explanation: event.target.value }))}
+                            onChange={(event) =>
+                              setDraftQuestion((prev) => ({
+                                ...(prev ?? {}),
+                                explanation: event.target.value,
+                              }))
+                            }
                             placeholder="Explanation"
                           />
                         </div>
                         <Space>
-                          <Button onClick={() => {
-                            setEditingQuestionId(null);
-                            setDraftQuestion(null);
-                          }}>
+                          <Button
+                            onClick={() => {
+                              setEditingQuestionId(null);
+                              setDraftQuestion(null);
+                            }}
+                          >
                             Cancel
                           </Button>
-                          <Button type="primary" loading={isUpdatingQuestion} onClick={() => void handleSaveQuestion()}>
+                          <Button
+                            type="primary"
+                            loading={isUpdatingQuestion}
+                            onClick={() => void handleSaveQuestion()}
+                          >
                             Save Question
                           </Button>
                         </Space>
                       </div>
                     ) : (
                       <div>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                          <Text strong>{question.question ?? "Untitled question"}</Text>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <Text strong>
+                            {question.question ?? "Untitled question"}
+                          </Text>
                           <Space>
                             <Button
                               size="small"
@@ -339,25 +479,39 @@ function TestCard({ test, onDeleteTest, onViewAttempts, onRefresh }: TestCardPro
                               danger
                               icon={<DeleteOutlined />}
                               loading={isDeletingQuestion}
-                              onClick={() => void handleDeleteQuestion(question)}
+                              onClick={() =>
+                                void handleDeleteQuestion(question)
+                              }
                             >
                               Delete
                             </Button>
                           </Space>
                         </div>
                         <div style={{ marginTop: 8 }}>
-                          <Text type="secondary">A. {question.optionA || "-"}</Text>
+                          <Text type="secondary">
+                            A. {question.optionA || "-"}
+                          </Text>
                           <br />
-                          <Text type="secondary">B. {question.optionB || "-"}</Text>
+                          <Text type="secondary">
+                            B. {question.optionB || "-"}
+                          </Text>
                           <br />
-                          <Text type="secondary">C. {question.optionC || "-"}</Text>
+                          <Text type="secondary">
+                            C. {question.optionC || "-"}
+                          </Text>
                           <br />
-                          <Text type="secondary">D. {question.optionD || "-"}</Text>
+                          <Text type="secondary">
+                            D. {question.optionD || "-"}
+                          </Text>
                         </div>
                         <div style={{ marginTop: 8 }}>
-                          <Text type="secondary">Correct option: {question.correctOption || "-"}</Text>
+                          <Text type="secondary">
+                            Correct option: {question.correctOption || "-"}
+                          </Text>
                         </div>
-                          <Text type="secondary">Explanation: {question.explanation || "-"}</Text>
+                        <Text type="secondary">
+                          Explanation: {question.explanation || "-"}
+                        </Text>
                       </div>
                     )}
                   </div>
@@ -371,9 +525,17 @@ function TestCard({ test, onDeleteTest, onViewAttempts, onRefresh }: TestCardPro
   );
 }
 
-export default function ExistingTestsModal({ open, onCancel, videoId, videoName, onViewAttempts }: Props) {
+export default function ExistingTestsModal({
+  open,
+  onCancel,
+  videoId,
+  videoName,
+  onViewAttempts,
+}: Props) {
   const [deleteTest, { isLoading: isDeletingTest }] = useDeleteTestMutation();
-  const { data, isFetching, refetch } = useGetTestsQuery(videoId ? { page: 1, limit: 50, videoId } : skipToken);
+  const { data, isFetching, refetch } = useGetTestsQuery(
+    videoId ? { page: 1, limit: 50, videoId } : skipToken,
+  );
   const tests = useMemo(() => data?.tests ?? [], [data]);
 
   const handleDeleteTest = async (testId: string) => {
@@ -390,6 +552,7 @@ export default function ExistingTestsModal({ open, onCancel, videoId, videoName,
     <Modal
       title={videoName ? `Tests for ${videoName}` : "Existing Tests"}
       open={open}
+      maskClosable={false}
       onCancel={onCancel}
       width={760}
       footer={null}
@@ -397,9 +560,16 @@ export default function ExistingTestsModal({ open, onCancel, videoId, videoName,
     >
       <Space direction="vertical" style={{ width: "100%" }}>
         {isFetching ? (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 100 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: 100,
+            }}
+          >
             <Spin />
-            </div>
+          </div>
         ) : tests.length === 0 ? (
           <Empty description="No tests created for this video yet." />
         ) : (

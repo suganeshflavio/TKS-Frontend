@@ -16,9 +16,7 @@ import {
   message,
 } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
-import {
-  useCreateTestMutation,
-} from "@/store/features/testsApi";
+import { useCreateTestMutation } from "@/store/features/testsApi";
 
 const { Text, Title } = Typography;
 
@@ -56,7 +54,13 @@ const createDefaultQuestion = (): McqQuestionDraft => ({
   explanation: "",
 });
 
-export default function McqModal({ open, onCancel, onSave, videoId, videoName }: Props) {
+export default function McqModal({
+  open,
+  onCancel,
+  onSave,
+  videoId,
+  videoName,
+}: Props) {
   const [form] = Form.useForm<McqFormValues>();
   const [createTest, { isLoading: isCreating }] = useCreateTestMutation();
   const [step, setStep] = useState(0);
@@ -153,6 +157,7 @@ export default function McqModal({ open, onCancel, onSave, videoId, videoName }:
     <Modal
       title={videoName ? `Manage Test for ${videoName}` : "Manage Test"}
       open={open}
+      maskClosable={false}
       onCancel={() => {
         form.resetFields();
         onCancel();
@@ -162,11 +167,21 @@ export default function McqModal({ open, onCancel, onSave, videoId, videoName }:
       destroyOnHidden
     >
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
-        <Steps current={step} size="small" items={[{ title: "Test details" }, { title: "Questions" }]} />
+        <Steps
+          current={step}
+          size="small"
+          items={[{ title: "Test details" }, { title: "Questions" }]}
+        />
 
         <Form form={form} layout="vertical" preserve={true}>
           {step === 0 ? (
-            <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+            <div
+              style={{
+                display: "grid",
+                gap: 16,
+                gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+              }}
+            >
               <Form.Item
                 label="Test Name"
                 name="testName"
@@ -190,11 +205,27 @@ export default function McqModal({ open, onCancel, onSave, videoId, videoName }:
               {(fields, { add, remove }) => (
                 <div>
                   {fields.map((field, index) => (
-                    <Card key={field.key} size="small" style={{ marginBottom: 12 }}>
-                      <Space align="center" style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+                    <Card
+                      key={field.key}
+                      size="small"
+                      style={{ marginBottom: 12 }}
+                    >
+                      <Space
+                        align="center"
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          width: "100%",
+                        }}
+                      >
                         <Text strong>Question {index + 1}</Text>
                         {fields.length > 1 ? (
-                          <Button size="small" danger type="text" onClick={() => remove(field.name)}>
+                          <Button
+                            size="small"
+                            danger
+                            type="text"
+                            onClick={() => remove(field.name)}
+                          >
                             Remove
                           </Button>
                         ) : null}
@@ -205,26 +236,76 @@ export default function McqModal({ open, onCancel, onSave, videoId, videoName }:
                         name={[field.name, "question"]}
                         rules={[{ required: true, message: "Enter question" }]}
                       >
-                        <Input.TextArea rows={2} placeholder="What is the main language used in Flutter?" />
+                        <Input.TextArea
+                          rows={2}
+                          placeholder="What is the main language used in Flutter?"
+                        />
                       </Form.Item>
 
-                      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-                        <Form.Item name={[field.name, "optionA"]} label="Option A" rules={[{ required: true, message: "Enter option A" }]}>
+                      <div
+                        style={{
+                          display: "grid",
+                          gap: 12,
+                          gridTemplateColumns:
+                            "repeat(auto-fit, minmax(220px, 1fr))",
+                        }}
+                      >
+                        <Form.Item
+                          name={[field.name, "optionA"]}
+                          label="Option A"
+                          rules={[
+                            { required: true, message: "Enter option A" },
+                          ]}
+                        >
                           <Input placeholder="Java" />
                         </Form.Item>
-                        <Form.Item name={[field.name, "optionB"]} label="Option B" rules={[{ required: true, message: "Enter option B" }]}>
+                        <Form.Item
+                          name={[field.name, "optionB"]}
+                          label="Option B"
+                          rules={[
+                            { required: true, message: "Enter option B" },
+                          ]}
+                        >
                           <Input placeholder="Dart" />
                         </Form.Item>
-                        <Form.Item name={[field.name, "optionC"]} label="Option C" rules={[{ required: true, message: "Enter option C" }]}>
+                        <Form.Item
+                          name={[field.name, "optionC"]}
+                          label="Option C"
+                          rules={[
+                            { required: true, message: "Enter option C" },
+                          ]}
+                        >
                           <Input placeholder="Python" />
                         </Form.Item>
-                        <Form.Item name={[field.name, "optionD"]} label="Option D" rules={[{ required: true, message: "Enter option D" }]}>
+                        <Form.Item
+                          name={[field.name, "optionD"]}
+                          label="Option D"
+                          rules={[
+                            { required: true, message: "Enter option D" },
+                          ]}
+                        >
                           <Input placeholder="Kotlin" />
                         </Form.Item>
                       </div>
 
-                      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-                        <Form.Item name={[field.name, "correctOption"]} label="Correct option" rules={[{ required: true, message: "Select correct answer" }]}>
+                      <div
+                        style={{
+                          display: "grid",
+                          gap: 12,
+                          gridTemplateColumns:
+                            "repeat(auto-fit, minmax(220px, 1fr))",
+                        }}
+                      >
+                        <Form.Item
+                          name={[field.name, "correctOption"]}
+                          label="Correct option"
+                          rules={[
+                            {
+                              required: true,
+                              message: "Select correct answer",
+                            },
+                          ]}
+                        >
                           <Select
                             options={[
                               { label: "A", value: "A" },
@@ -235,14 +316,23 @@ export default function McqModal({ open, onCancel, onSave, videoId, videoName }:
                           />
                         </Form.Item>
 
-                        <Form.Item name={[field.name, "explanation"]} label="Explanation">
-                          <Input.TextArea rows={2} placeholder="Explain why this is correct" />
+                        <Form.Item
+                          name={[field.name, "explanation"]}
+                          label="Explanation"
+                        >
+                          <Input.TextArea
+                            rows={2}
+                            placeholder="Explain why this is correct"
+                          />
                         </Form.Item>
                       </div>
                     </Card>
                   ))}
 
-                  <Button onClick={() => add(createDefaultQuestion())} disabled={questions.length >= 25}>
+                  <Button
+                    onClick={() => add(createDefaultQuestion())}
+                    disabled={questions.length >= 25}
+                  >
                     Add another question ({questions.length}/25)
                   </Button>
                 </div>
@@ -253,10 +343,12 @@ export default function McqModal({ open, onCancel, onSave, videoId, videoName }:
           <Divider />
 
           <Space>
-            <Button onClick={() => {
-              form.resetFields();
-              onCancel();
-            }}>
+            <Button
+              onClick={() => {
+                form.resetFields();
+                onCancel();
+              }}
+            >
               Cancel
             </Button>
             {step > 0 ? (
@@ -269,7 +361,11 @@ export default function McqModal({ open, onCancel, onSave, videoId, videoName }:
                 Next <RightOutlined />
               </Button>
             ) : (
-              <Button type="primary" loading={isCreating} onClick={() => void handleFinish()}>
+              <Button
+                type="primary"
+                loading={isCreating}
+                onClick={() => void handleFinish()}
+              >
                 Create Test
               </Button>
             )}
