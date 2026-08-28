@@ -7,8 +7,6 @@ export type CourseItem = {
   courseName?: string;
   isActive?: boolean;
   IsActive?: boolean;
-  subject?: string;
-  subjects?: string[];
   accessType?: "free" | "paid";
   paymentType?: "full" | "emi";
   price?: number;
@@ -16,6 +14,12 @@ export type CourseItem = {
   validityMonths?: number;
   installments?: number;
   bannerFileName?: string;
+  thumbnail?: string;
+  enableEmi?: boolean;
+  subjects?: { order?: number; subject: { id: string; name: string } }[];
+  videos?: { order?: number; isActive?: boolean; video: { id: string; videoName: string; isActive?: boolean } }[];
+  notes?: { order?: number; isActive?: boolean; notes: { id: string; title: string; isActive?: boolean } }[];
+  mcqTests?: { order?: number; isActive?: boolean; test: { id: string; testName: string } }[];
 };
 
 export type PaginatedResponse<T> = {
@@ -111,6 +115,66 @@ export const coursesApi = appApi.injectEndpoints({
       }),
       invalidatesTags: ["Course"],
     }),
+    linkCourseSubject: builder.mutation<unknown, { courseId: string; subjectId: string; order?: number }>({
+      query: ({ courseId, subjectId, order }) => ({
+        url: `/courses/${courseId}/subjects`,
+        method: "POST",
+        body: { subjectId, order },
+      }),
+      invalidatesTags: ["Course"],
+    }),
+    unlinkCourseSubject: builder.mutation<unknown, { courseId: string; subjectId: string }>({
+      query: ({ courseId, subjectId }) => ({
+        url: `/courses/${courseId}/subjects/${subjectId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Course"],
+    }),
+    linkCourseVideo: builder.mutation<unknown, { courseId: string; videoId: string; order?: number }>({
+      query: ({ courseId, videoId, order }) => ({
+        url: `/courses/${courseId}/videos`,
+        method: "POST",
+        body: { videoId, order },
+      }),
+      invalidatesTags: ["Course"],
+    }),
+    unlinkCourseVideo: builder.mutation<unknown, { courseId: string; videoId: string }>({
+      query: ({ courseId, videoId }) => ({
+        url: `/courses/${courseId}/videos/${videoId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Course"],
+    }),
+    linkCourseNotes: builder.mutation<unknown, { courseId: string; notesId: string; order?: number }>({
+      query: ({ courseId, notesId, order }) => ({
+        url: `/courses/${courseId}/notes`,
+        method: "POST",
+        body: { notesId, order },
+      }),
+      invalidatesTags: ["Course"],
+    }),
+    unlinkCourseNotes: builder.mutation<unknown, { courseId: string; notesId: string }>({
+      query: ({ courseId, notesId }) => ({
+        url: `/courses/${courseId}/notes/${notesId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Course"],
+    }),
+    linkCourseMcqTest: builder.mutation<unknown, { courseId: string; testId: string; order?: number }>({
+      query: ({ courseId, testId, order }) => ({
+        url: `/courses/${courseId}/mcq-tests`,
+        method: "POST",
+        body: { testId, order },
+      }),
+      invalidatesTags: ["Course"],
+    }),
+    unlinkCourseMcqTest: builder.mutation<unknown, { courseId: string; testId: string }>({
+      query: ({ courseId, testId }) => ({
+        url: `/courses/${courseId}/mcq-tests/${testId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Course"],
+    }),
   }),
 });
 
@@ -118,6 +182,15 @@ export const {
   useGetCoursesQuery,
   useCreateCourseMutation,
   useGetCourseByIdQuery,
+  useLazyGetCourseByIdQuery,
   useUpdateCourseMutation,
   usePermanentDeleteCourseMutation,
+  useLinkCourseSubjectMutation,
+  useUnlinkCourseSubjectMutation,
+  useLinkCourseVideoMutation,
+  useUnlinkCourseVideoMutation,
+  useLinkCourseNotesMutation,
+  useUnlinkCourseNotesMutation,
+  useLinkCourseMcqTestMutation,
+  useUnlinkCourseMcqTestMutation,
 } = coursesApi;

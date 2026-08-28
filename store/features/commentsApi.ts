@@ -11,9 +11,6 @@ export type CommentItem = {
 
 export type VideoCommentGroup = {
   videoId: string;
-  courseName: string;
-  subjectName: string;
-  chapterName: string;
   videoName: string;
   comments: CommentItem[];
 };

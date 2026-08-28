@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Button,
   Descriptions,
@@ -42,15 +42,17 @@ export default function TestAttemptsModal({
   const [selectedAttempt, setSelectedAttempt] =
     useState<TestAttemptItem | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [openedFor, setOpenedFor] = useState<string | undefined>(undefined);
 
-  useEffect(() => {
-    if (open) {
-      setPage(1);
-      setPageSize(10);
-      setSelectedAttempt(null);
-      setDetailOpen(false);
-    }
-  }, [open, testId]);
+  if (open && openedFor !== testId) {
+    setOpenedFor(testId);
+    setPage(1);
+    setPageSize(10);
+    setSelectedAttempt(null);
+    setDetailOpen(false);
+  } else if (!open && openedFor !== undefined) {
+    setOpenedFor(undefined);
+  }
 
   const getStudentName = (attempt: TestAttemptItem) => {
     const candidate = [
@@ -122,19 +124,7 @@ export default function TestAttemptsModal({
       title: "Video",
       dataIndex: "video",
       key: "video",
-      render: (_value, record) => {
-        const videoName = record.video?.videoName || "Unknown video";
-        const subject = record.video?.subject ? `${record.video.subject}` : "";
-        const chapter = record.video?.chapter
-          ? ` • ${record.video.chapter}`
-          : "";
-        return (
-          <div>
-            <div>{videoName}</div>
-            <Text type="secondary">{`${subject}${chapter}`.trim()}</Text>
-          </div>
-        );
-      },
+      render: (_value, record) => <span>{record.video?.videoName || "-"}</span>,
     },
     {
       title: "Status",
@@ -274,9 +264,6 @@ export default function TestAttemptsModal({
               </Descriptions.Item>
               <Descriptions.Item label="Video">
                 {selectedAttempt.video?.videoName || "-"}
-              </Descriptions.Item>
-              <Descriptions.Item label="Course">
-                {selectedAttempt.video?.course?.courseName || "-"}
               </Descriptions.Item>
               <Descriptions.Item label="Status">
                 <Tag color={getStatusColor(selectedAttempt.status)}>

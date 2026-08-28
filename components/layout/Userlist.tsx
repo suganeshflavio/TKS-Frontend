@@ -29,8 +29,7 @@ import {
   StopOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
-import { type CourseItem, useGetCoursesQuery } from "@/store/features/coursesApi";
-import { type VideoItem, useGetVideosQuery } from "@/store/features/videosApi";
+import { type CourseItem, useGetCoursesQuery, useLazyGetCourseByIdQuery } from "@/store/features/coursesApi";
 import { skipToken } from "@reduxjs/toolkit/query";
 import {
   type UserItem,
@@ -65,6 +64,8 @@ type UserAccessModalState = {
   userId: string | null;
   userName: string;
 };
+
+type CourseVideosMap = Record<string, { id: string; videoName: string }[]>;
 
 const pickUsers = (payload: unknown): UserItem[] => {
   if (Array.isArray(payload)) {
@@ -130,54 +131,16 @@ const pickCourses = (payload: unknown): CourseItem[] => {
   return [];
 };
 
-const pickVideos = (payload: unknown): VideoItem[] => {
-  if (Array.isArray(payload)) {
-    return payload as VideoItem[];
-  }
-
-  if (!payload || typeof payload !== "object") {
-    return [];
-  }
-
-  const data = payload as Record<string, unknown>;
-  const candidates = [data.data, data.items, data.results, data.rows, data.videos];
-
-  for (const candidate of candidates) {
-    if (Array.isArray(candidate)) {
-      return candidate as VideoItem[];
-    }
-  }
-
-  if (data.data && typeof data.data === "object") {
-    const nested = data.data as Record<string, unknown>;
-    const nestedCandidates = [nested.data, nested.items, nested.results, nested.rows, nested.videos];
-
-    for (const candidate of nestedCandidates) {
-      if (Array.isArray(candidate)) {
-        return candidate as VideoItem[];
-      }
-    }
-  }
-
-  return [];
-};
-
 const getCourseName = (course: CourseItem) => course.courseName ?? course.name ?? course.title ?? course.id;
 
-const getSubjectName = (subject: string) => subject;
-
-const getChapterName = (video: VideoItem) => video.chapter ?? video.topicName ?? video.title ?? video.videoName ?? "";
-
-const makeAccessKey = (courseId: string, subject: string, chapter: string) => [courseId, subject, chapter].join("::");
+const makeAccessKey = (courseId: string, videoId: string) => [courseId, videoId].join("::");
 
 const splitAccessKey = (key: string) => {
-  const [courseId = "", subject = "", chapter = ""] = key.split("::");
-  return { courseId, subject, chapter };
+  const [courseId = "", videoId = ""] = key.split("::");
+  return { courseId, videoId };
 };
 
-const isSubjectKey = (key: string) => key.includes("::subject::");
-
-const isChapterKey = (key: string) => key.split("::").length === 3 && !isSubjectKey(key);
+const isVideoKey = (key: string) => key.split("::").length === 2;
 
 type SearchableDataNode = DataNode & { searchValue?: string; children?: SearchableDataNode[] };
 
@@ -225,6 +188,8 @@ export default function Userlist() {
   const [accessSearchText, setAccessSearchText] = useState("");
   const [checkedAccessKeys, setCheckedAccessKeys] = useState<string[]>([]);
   const [isAccessDirty, setIsAccessDirty] = useState(false);
+  const [courseVideosMap, setCourseVideosMap] = useState<CourseVideosMap>({});
+  const [isLoadingCourseVideos, setIsLoadingCourseVideos] = useState(false);
 
   const { data, isFetching, refetch } = useGetUsersQuery({
     page,
@@ -239,7 +204,7 @@ export default function Userlist() {
   const { data: accessDetail, isFetching: isLoadingAccessDetail } = useGetUserAccessQuery(accessUserId);
 
   const { data: coursesPayload } = useGetCoursesQuery({ page: 1, limit: 1000 });
-  const { data: videosPayload } = useGetVideosQuery({ page: 1, limit: 1000 });
+  const [fetchCourseById] = useLazyGetCourseByIdQuery();
 
   const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
@@ -263,79 +228,70 @@ export default function Userlist() {
     });
   }, [coursesPayload]);
 
-  const videos = useMemo(() => {
-    return pickVideos(videosPayload).filter((video) => {
-      const isActive = video.isActive ?? video.IsActive;
-      return isActive !== false;
-    });
-  }, [videosPayload]);
+  // Load each active course's linked videos when the access modal opens.
+  useEffect(() => {
+    if (!accessModal.open || courses.length === 0) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadAll = async () => {
+      setIsLoadingCourseVideos(true);
+
+      try {
+        const entries = await Promise.all(
+          courses.map(async (course) => {
+            const detail = await fetchCourseById(course.id).unwrap();
+            const videos = (detail.videos ?? [])
+              .filter((item) => item.isActive !== false && item.video?.isActive !== false)
+              .map((item) => ({ id: item.video.id, videoName: item.video.videoName }));
+
+            return [course.id, videos] as const;
+          }),
+        );
+
+        if (!cancelled) {
+          setCourseVideosMap(Object.fromEntries(entries));
+        }
+      } catch (error: unknown) {
+        if (!cancelled) {
+          message.error((error as Error)?.message || "Unable to load course content.");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingCourseVideos(false);
+        }
+      }
+    };
+
+    void loadAll();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessModal.open, courses, fetchCourseById]);
 
   const accessTreeData = useMemo(() => {
-    const tree: SearchableDataNode[] = [];
-
-    for (const course of courses) {
+    const tree: SearchableDataNode[] = courses.map((course) => {
       const courseName = getCourseName(course);
-      const subjects = new Set<string>();
+      const videos = courseVideosMap[course.id] ?? [];
 
-      for (const subject of course.subjects ?? []) {
-        if (subject?.trim()) {
-          subjects.add(subject.trim());
-        }
-      }
-
-      for (const video of videos) {
-        const videoCourseId = video.courseId ?? video.classKey;
-        if (videoCourseId !== course.id) {
-          continue;
-        }
-
-        const subjectName = (video.subject ?? "").trim();
-        if (subjectName) {
-          subjects.add(subjectName);
-        }
-      }
-
-      const subjectNodes: SearchableDataNode[] = [];
-
-      for (const subject of Array.from(subjects).sort()) {
-        const chapterMap = new Map<string, string>();
-
-        for (const video of videos) {
-          const videoCourseId = video.courseId ?? video.classKey;
-          const videoSubject = (video.subject ?? "").trim();
-          const chapterName = getChapterName(video).trim();
-
-          if (videoCourseId !== course.id || videoSubject !== subject || !chapterName) {
-            continue;
-          }
-
-          chapterMap.set(chapterName, makeAccessKey(course.id, subject, chapterName));
-        }
-
-        const chapterNodes = Array.from(chapterMap.entries()).map(([chapterName, key]) => ({
-          title: <span style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{chapterName}</span>,
-          searchValue: chapterName,
-          key,
-        }));
-
-        subjectNodes.push({
-          title: <span style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{getSubjectName(subject)}</span>,
-          searchValue: getSubjectName(subject),
-          key: `${course.id}::subject::${subject}`,
-          children: chapterNodes,
-        });
-      }
-
-      tree.push({
+      return {
         title: <span style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{courseName}</span>,
         searchValue: courseName,
         key: course.id,
-        children: subjectNodes,
-      });
-    }
+        checkable: false,
+        children: videos.map((video) => ({
+          title: <span style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{video.videoName}</span>,
+          searchValue: video.videoName,
+          key: makeAccessKey(course.id, video.id),
+        })),
+      };
+    });
 
     return filterTreeData(tree, accessSearchText);
-  }, [accessSearchText, courses, videos]);
+  }, [accessSearchText, courseVideosMap, courses]);
 
   useEffect(() => {
     if (!userDetail || !editingId) {
@@ -365,18 +321,12 @@ export default function Userlist() {
         continue;
       }
 
-      for (const subject of course.subjects ?? []) {
-        if (!subject.subject) {
+      for (const video of course.videos ?? []) {
+        if (!video.videoId) {
           continue;
         }
 
-        for (const chapter of subject.chapters ?? []) {
-          if (!chapter) {
-            continue;
-          }
-
-          keys.push(makeAccessKey(course.courseId, subject.subject, chapter));
-        }
+        keys.push(makeAccessKey(course.courseId, video.videoId));
       }
     }
 
@@ -459,6 +409,7 @@ export default function Userlist() {
     setAccessSearchText("");
     setCheckedAccessKeys([]);
     setIsAccessDirty(false);
+    setCourseVideosMap({});
   };
 
   const resetAccessModal = () => {
@@ -466,6 +417,7 @@ export default function Userlist() {
     setAccessSearchText("");
     setCheckedAccessKeys([]);
     setIsAccessDirty(false);
+    setCourseVideosMap({});
   };
 
   const onSaveAccess = async () => {
@@ -473,80 +425,28 @@ export default function Userlist() {
       return;
     }
 
-    const selectedKeys = new Set(effectiveCheckedAccessKeys);
-    const allChapterKeys = new Set<string>();
+    const flatAccesses = Array.from(new Set(effectiveCheckedAccessKeys))
+      .filter(isVideoKey)
+      .map((key) => splitAccessKey(key));
 
-    for (const video of videos) {
-      const courseId = video.courseId ?? video.classKey;
-      const subject = (video.subject ?? "").trim();
-      const chapter = getChapterName(video).trim();
+    const courseMap = new Map<string, Set<string>>();
 
-      if (!courseId || !subject || !chapter) {
-        continue;
-      }
-
-      allChapterKeys.add(makeAccessKey(courseId, subject, chapter));
+    for (const { courseId, videoId } of flatAccesses) {
+      const videoIds = courseMap.get(courseId) ?? new Set<string>();
+      courseMap.set(courseId, videoIds);
+      videoIds.add(videoId);
     }
 
-    const expandedChapterKeys = new Set<string>();
-
-    for (const key of selectedKeys) {
-      if (isChapterKey(key)) {
-        expandedChapterKeys.add(key);
-        continue;
-      }
-
-      if (isSubjectKey(key)) {
-        const [courseId, , subject] = key.split("::");
-        const subjectPrefix = `${courseId}::${subject}::`;
-
-        for (const chapterKey of allChapterKeys) {
-          if (chapterKey.startsWith(subjectPrefix)) {
-            expandedChapterKeys.add(chapterKey);
-          }
-        }
-        continue;
-      }
-
-      const coursePrefix = `${key}::`;
-      for (const chapterKey of allChapterKeys) {
-        if (chapterKey.startsWith(coursePrefix)) {
-          expandedChapterKeys.add(chapterKey);
-        }
-      }
-    }
-
-    const flatAccesses = Array.from(expandedChapterKeys)
-      .map((key) => splitAccessKey(key))
-      .filter((item): item is { courseId: string; subject: string; chapter: string } =>
-        Boolean(item.courseId && item.subject && item.chapter),
-      );
-
-    const courseMap = new Map<string, Map<string, Set<string>>>();
-
-    for (const { courseId, subject, chapter } of flatAccesses) {
-      const subjectMap = courseMap.get(courseId) ?? new Map<string, Set<string>>();
-      courseMap.set(courseId, subjectMap);
-
-      const chapters = subjectMap.get(subject) ?? new Set<string>();
-      subjectMap.set(subject, chapters);
-
-      chapters.add(chapter);
-    }
-
-    const courses: SaveUserAccessCourse[] = Array.from(courseMap.entries()).map(
-      ([courseId, subjectMap]) => ({
+    const coursesPayload: SaveUserAccessCourse[] = Array.from(courseMap.entries()).map(
+      ([courseId, videoIds]) => ({
         courseId,
-        subjects: Array.from(subjectMap.entries()).map(([subject, chapters]) => ({
-          subject,
-          chapters: Array.from(chapters),
-        })),
+        videoIds: Array.from(videoIds),
       }),
     );
 
     const body: SaveUserAccessRequest = {
       userId: accessModal.userId,
-      courses,
+      courses: coursesPayload,
     };
 
     try {
@@ -587,17 +487,6 @@ export default function Userlist() {
         </div>
       ),
     },
-    // {
-    //   title: "Phone",
-    //   key: "mobile",
-    //   dataIndex: "mobile",
-    //   render: (value: string | undefined) => value ?? "-",
-    // },
-    // {
-    //   title: "Role",
-    //   key: "role",
-    //   render: (_, record) => <Tag>{record.role ?? record.Role ?? "student"}</Tag>,
-    // },
     {
       title: "Class",
       key: "class",
@@ -620,16 +509,8 @@ export default function Userlist() {
     {
       title: "Action",
       key: "action",
-      // align: "right",
       render: (_, record) => (
         <Space wrap>
-          {/* <Button
-            icon={record.isAccess ? <EyeOutlined /> : <PlusOutlined />}
-            variant="outlined"
-            onClick={() => openAccessModal(record)}
-          >
-            {record.isAccess ? "View Course" : "Add Course"}
-          </Button> */}
           <Button
             icon={<EditOutlined />}
             color="primary"
@@ -776,17 +657,6 @@ export default function Userlist() {
             <Input placeholder="Optional phone" />
           </Form.Item>
 
-          {/* <Form.Item name="role" label="Role">
-            <Select
-              allowClear
-              options={[
-                { label: "Student", value: "student" },
-                { label: "Admin", value: "admin" },
-                { label: "Mentor", value: "mentor" },
-              ]}
-            />
-          </Form.Item> */}
-
           <Form.Item name="class" label="Class" rules={[{ required: true, message: "Class is required." }]}>
             <Select
               allowClear
@@ -840,7 +710,7 @@ export default function Userlist() {
         onCancel={resetAccessModal}
         onOk={onSaveAccess}
         okText="Assign Access"
-        confirmLoading={isLoadingAccessDetail || isSavingAccess || isUpdatingAccess}
+        confirmLoading={isLoadingAccessDetail || isLoadingCourseVideos || isSavingAccess || isUpdatingAccess}
         width="min(900px, 96vw)"
         style={{ top: 16 }}
         destroyOnHidden
@@ -848,7 +718,7 @@ export default function Userlist() {
         <Space direction="vertical" size={16} style={{ width: "100%" }}>
           <Input.Search
             allowClear
-            placeholder="Search course, subject, or chapter"
+            placeholder="Search course or video"
             value={accessSearchText}
             onChange={(event) => setAccessSearchText(event.target.value)}
           />
@@ -871,8 +741,8 @@ export default function Userlist() {
               selectable={false}
               showLine
             />
-            {!isLoadingAccessDetail && accessTreeData.length === 0 ? (
-              <Text type="secondary">No courses, subjects, or chapters available.</Text>
+            {!isLoadingAccessDetail && !isLoadingCourseVideos && accessTreeData.length === 0 ? (
+              <Text type="secondary">No courses available.</Text>
             ) : null}
           </div>
         </Space>

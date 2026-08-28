@@ -2,8 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import {
+  BookOutlined,
   CheckCircleOutlined,
   CommentOutlined,
+  FileTextOutlined,
+  FormOutlined,
   ReadOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -14,7 +17,10 @@ import {
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import CoursePage from "@/components/layout/Course";
+import Curriculum from "@/components/layout/Curriculum";
 import Videos from "@/components/layout/Videos";
+import Notes from "@/components/layout/Notes";
+import McqTests from "@/components/layout/McqTests";
 import Userlist from "@/components/layout/Userlist";
 import Comments from "@/components/layout/Comments";
 import Testimonials from "@/components/layout/Testimonials";
@@ -54,19 +60,13 @@ function getItem(
 }
 
 const items: MenuItem[] = [
-  getItem("Course Details", "sub1", <ReadOutlined />, [
-    getItem("Add Course", "1", <ReadOutlined />),
-    getItem("Add Video", "2", <VideoCameraAddOutlined />),
-    // getItem("Add Mcq", "3", <CheckCircleOutlined />),
+  getItem("Content Library", "sub1", <BookOutlined />, [
+    getItem("Curriculum", "1", <ReadOutlined />),
+    getItem("Videos", "2", <VideoCameraAddOutlined />),
+    getItem("Notes", "3", <FileTextOutlined />),
+    getItem("MCQ Tests", "8", <FormOutlined />),
   ]),
-  // getItem("Claim Form", "1", <FormOutlined />),
-  // getItem("Claim Status", "2", <FileOutlined />),
-  //   getItem('User', 'sub1', <UserOutlined />, [
-  //     getItem('Tom', '3'),
-  //     getItem('Bill', '4'),
-  //     getItem('Alex', '5'),
-  //   ]),
-  // getItem("Approval Section", "3", <CheckCircleOutlined />),
+  getItem("Courses", "9", <ReadOutlined />),
   getItem("User Details", "sub2", <UserOutlined />, [
     getItem("User List", "4", <UserOutlined />),
     // getItem("Payment List", "5", <CreditCardOutlined />),
@@ -101,10 +101,19 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (selectedMenu) {
       case "1":
-        return <CoursePage />;
+        return <Curriculum />;
 
       case "2":
         return <Videos />;
+
+      case "3":
+        return <Notes />;
+
+      case "8":
+        return <McqTests />;
+
+      case "9":
+        return <CoursePage />;
 
       case "4":
         return <Userlist />;
@@ -118,11 +127,8 @@ const App: React.FC = () => {
       // case "5":
       //   return <PaymentList />;
 
-      // case "3":
-      //   return <ApprovalSection claimsData={claimsData} refunction={fetchClaims} />;
-
       default:
-        return <CoursePage />;
+        return <Curriculum />;
     }
   };
   const userMenu = {
