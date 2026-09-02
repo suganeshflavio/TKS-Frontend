@@ -16,6 +16,7 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import { useGetTestAttemptsQuery } from "@/store/features/testsApi";
 import type { TestAttemptItem } from "@/store/features/testsApi";
+import RichContent from "../common/RichContent";
 
 const { Text, Title } = Typography;
 
@@ -307,7 +308,7 @@ export default function TestAttemptsModal({
                     title: "Question",
                     dataIndex: "question",
                     key: "question",
-                    render: (value) => <span>{value || "-"}</span>,
+                    render: (value) => <RichContent html={value} />,
                   },
                   {
                     title: "Selected",

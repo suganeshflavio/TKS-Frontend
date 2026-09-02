@@ -24,9 +24,12 @@ import {
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
+  FileTextOutlined,
+  FormOutlined,
   PlusOutlined,
   SearchOutlined,
   StopOutlined,
+  VideoCameraOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { type CourseItem, useGetCoursesQuery, useLazyGetCourseByIdQuery } from "@/store/features/coursesApi";
@@ -65,7 +68,15 @@ type UserAccessModalState = {
   userName: string;
 };
 
-type CourseVideosMap = Record<string, { id: string; videoName: string }[]>;
+type CourseContent = {
+  videos: { id: string; videoName: string }[];
+  notes: { id: string; title: string }[];
+  mcqTests: { id: string; testName: string }[];
+};
+
+type CourseContentMap = Record<string, CourseContent>;
+
+type AccessKind = "video" | "notes" | "test";
 
 const pickUsers = (payload: unknown): UserItem[] => {
   if (Array.isArray(payload)) {
@@ -133,14 +144,14 @@ const pickCourses = (payload: unknown): CourseItem[] => {
 
 const getCourseName = (course: CourseItem) => course.courseName ?? course.name ?? course.title ?? course.id;
 
-const makeAccessKey = (courseId: string, videoId: string) => [courseId, videoId].join("::");
+const makeAccessKey = (courseId: string, kind: AccessKind, itemId: string) => [courseId, kind, itemId].join("::");
+
+const isLeafAccessKey = (key: string) => key.split("::").length === 3;
 
 const splitAccessKey = (key: string) => {
-  const [courseId = "", videoId = ""] = key.split("::");
-  return { courseId, videoId };
+  const [courseId = "", kind = "video", itemId = ""] = key.split("::");
+  return { courseId, kind: kind as AccessKind, itemId };
 };
-
-const isVideoKey = (key: string) => key.split("::").length === 2;
 
 type SearchableDataNode = DataNode & { searchValue?: string; children?: SearchableDataNode[] };
 
@@ -188,8 +199,8 @@ export default function Userlist() {
   const [accessSearchText, setAccessSearchText] = useState("");
   const [checkedAccessKeys, setCheckedAccessKeys] = useState<string[]>([]);
   const [isAccessDirty, setIsAccessDirty] = useState(false);
-  const [courseVideosMap, setCourseVideosMap] = useState<CourseVideosMap>({});
-  const [isLoadingCourseVideos, setIsLoadingCourseVideos] = useState(false);
+  const [courseContentMap, setCourseContentMap] = useState<CourseContentMap>({});
+  const [isLoadingCourseContent, setIsLoadingCourseContent] = useState(false);
 
   const { data, isFetching, refetch } = useGetUsersQuery({
     page,
@@ -228,7 +239,7 @@ export default function Userlist() {
     });
   }, [coursesPayload]);
 
-  // Load each active course's linked videos when the access modal opens.
+  // Load each active course's linked videos/notes/mcq tests when the access modal opens.
   useEffect(() => {
     if (!accessModal.open || courses.length === 0) {
       return;
@@ -237,22 +248,32 @@ export default function Userlist() {
     let cancelled = false;
 
     const loadAll = async () => {
-      setIsLoadingCourseVideos(true);
+      setIsLoadingCourseContent(true);
 
       try {
         const entries = await Promise.all(
           courses.map(async (course) => {
             const detail = await fetchCourseById(course.id).unwrap();
+
             const videos = (detail.videos ?? [])
               .filter((item) => item.isActive !== false && item.video?.isActive !== false)
               .map((item) => ({ id: item.video.id, videoName: item.video.videoName }));
 
-            return [course.id, videos] as const;
+            const notes = (detail.notes ?? [])
+              .filter((item) => item.isActive !== false && item.notes?.isActive !== false)
+              .map((item) => ({ id: item.notes.id, title: item.notes.title }));
+
+            const mcqTests = (detail.mcqTests ?? [])
+              .filter((item) => item.isActive !== false)
+              .map((item) => ({ id: item.test.id, testName: item.test.testName }));
+
+            const content: CourseContent = { videos, notes, mcqTests };
+            return [course.id, content] as const;
           }),
         );
 
         if (!cancelled) {
-          setCourseVideosMap(Object.fromEntries(entries));
+          setCourseContentMap(Object.fromEntries(entries));
         }
       } catch (error: unknown) {
         if (!cancelled) {
@@ -260,7 +281,7 @@ export default function Userlist() {
         }
       } finally {
         if (!cancelled) {
-          setIsLoadingCourseVideos(false);
+          setIsLoadingCourseContent(false);
         }
       }
     };
@@ -275,23 +296,66 @@ export default function Userlist() {
   const accessTreeData = useMemo(() => {
     const tree: SearchableDataNode[] = courses.map((course) => {
       const courseName = getCourseName(course);
-      const videos = courseVideosMap[course.id] ?? [];
+      const content = courseContentMap[course.id] ?? { videos: [], notes: [], mcqTests: [] };
+
+      const categories: SearchableDataNode[] = [
+        {
+          title: (
+            <span>
+              <VideoCameraOutlined style={{ color: "#1677ff", marginRight: 6 }} />
+              Videos ({content.videos.length})
+            </span>
+          ),
+          searchValue: "videos",
+          key: `${course.id}::video`,
+          children: content.videos.map((video) => ({
+            title: <span style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{video.videoName}</span>,
+            searchValue: video.videoName,
+            key: makeAccessKey(course.id, "video", video.id),
+          })),
+        },
+        {
+          title: (
+            <span>
+              <FileTextOutlined style={{ color: "#52c41a", marginRight: 6 }} />
+              Notes ({content.notes.length})
+            </span>
+          ),
+          searchValue: "notes",
+          key: `${course.id}::notes`,
+          children: content.notes.map((note) => ({
+            title: <span style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{note.title}</span>,
+            searchValue: note.title,
+            key: makeAccessKey(course.id, "notes", note.id),
+          })),
+        },
+        {
+          title: (
+            <span>
+              <FormOutlined style={{ color: "#fa8c16", marginRight: 6 }} />
+              MCQ Tests ({content.mcqTests.length})
+            </span>
+          ),
+          searchValue: "mcq tests",
+          key: `${course.id}::test`,
+          children: content.mcqTests.map((test) => ({
+            title: <span style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{test.testName}</span>,
+            searchValue: test.testName,
+            key: makeAccessKey(course.id, "test", test.id),
+          })),
+        },
+      ];
 
       return {
         title: <span style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{courseName}</span>,
         searchValue: courseName,
         key: course.id,
-        checkable: false,
-        children: videos.map((video) => ({
-          title: <span style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{video.videoName}</span>,
-          searchValue: video.videoName,
-          key: makeAccessKey(course.id, video.id),
-        })),
+        children: categories,
       };
     });
 
     return filterTreeData(tree, accessSearchText);
-  }, [accessSearchText, courseVideosMap, courses]);
+  }, [accessSearchText, courseContentMap, courses]);
 
   useEffect(() => {
     if (!userDetail || !editingId) {
@@ -322,11 +386,21 @@ export default function Userlist() {
       }
 
       for (const video of course.videos ?? []) {
-        if (!video.videoId) {
-          continue;
+        if (video.videoId) {
+          keys.push(makeAccessKey(course.courseId, "video", video.videoId));
         }
+      }
 
-        keys.push(makeAccessKey(course.courseId, video.videoId));
+      for (const note of course.notes ?? []) {
+        if (note.notesId) {
+          keys.push(makeAccessKey(course.courseId, "notes", note.notesId));
+        }
+      }
+
+      for (const test of course.mcqTests ?? []) {
+        if (test.testId) {
+          keys.push(makeAccessKey(course.courseId, "test", test.testId));
+        }
       }
     }
 
@@ -409,7 +483,7 @@ export default function Userlist() {
     setAccessSearchText("");
     setCheckedAccessKeys([]);
     setIsAccessDirty(false);
-    setCourseVideosMap({});
+    setCourseContentMap({});
   };
 
   const resetAccessModal = () => {
@@ -417,7 +491,7 @@ export default function Userlist() {
     setAccessSearchText("");
     setCheckedAccessKeys([]);
     setIsAccessDirty(false);
-    setCourseVideosMap({});
+    setCourseContentMap({});
   };
 
   const onSaveAccess = async () => {
@@ -426,21 +500,30 @@ export default function Userlist() {
     }
 
     const flatAccesses = Array.from(new Set(effectiveCheckedAccessKeys))
-      .filter(isVideoKey)
+      .filter(isLeafAccessKey)
       .map((key) => splitAccessKey(key));
 
-    const courseMap = new Map<string, Set<string>>();
+    const courseMap = new Map<string, { videoIds: Set<string>; notesIds: Set<string>; testIds: Set<string> }>();
 
-    for (const { courseId, videoId } of flatAccesses) {
-      const videoIds = courseMap.get(courseId) ?? new Set<string>();
-      courseMap.set(courseId, videoIds);
-      videoIds.add(videoId);
+    for (const { courseId, kind, itemId } of flatAccesses) {
+      const entry = courseMap.get(courseId) ?? {
+        videoIds: new Set<string>(),
+        notesIds: new Set<string>(),
+        testIds: new Set<string>(),
+      };
+      courseMap.set(courseId, entry);
+
+      if (kind === "video") entry.videoIds.add(itemId);
+      else if (kind === "notes") entry.notesIds.add(itemId);
+      else if (kind === "test") entry.testIds.add(itemId);
     }
 
     const coursesPayload: SaveUserAccessCourse[] = Array.from(courseMap.entries()).map(
-      ([courseId, videoIds]) => ({
+      ([courseId, entry]) => ({
         courseId,
-        videoIds: Array.from(videoIds),
+        videoIds: Array.from(entry.videoIds),
+        notesIds: Array.from(entry.notesIds),
+        testIds: Array.from(entry.testIds),
       }),
     );
 
@@ -710,7 +793,7 @@ export default function Userlist() {
         onCancel={resetAccessModal}
         onOk={onSaveAccess}
         okText="Assign Access"
-        confirmLoading={isLoadingAccessDetail || isLoadingCourseVideos || isSavingAccess || isUpdatingAccess}
+        confirmLoading={isLoadingAccessDetail || isLoadingCourseContent || isSavingAccess || isUpdatingAccess}
         width="min(900px, 96vw)"
         style={{ top: 16 }}
         destroyOnHidden
@@ -741,7 +824,7 @@ export default function Userlist() {
               selectable={false}
               showLine
             />
-            {!isLoadingAccessDetail && !isLoadingCourseVideos && accessTreeData.length === 0 ? (
+            {!isLoadingAccessDetail && !isLoadingCourseContent && accessTreeData.length === 0 ? (
               <Text type="secondary">No courses available.</Text>
             ) : null}
           </div>

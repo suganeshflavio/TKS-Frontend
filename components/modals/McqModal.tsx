@@ -17,6 +17,7 @@ import {
 } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { useCreateTestMutation } from "@/store/features/testsApi";
+import RichTextEditor from "../common/RichTextEditor";
 
 const { Text } = Typography;
 
@@ -226,10 +227,7 @@ export default function McqModal({
                         name={[field.name, "question"]}
                         rules={[{ required: true, message: "Enter question" }]}
                       >
-                        <Input.TextArea
-                          rows={2}
-                          placeholder="What is the main language used in Flutter?"
-                        />
+                        <RichTextEditor placeholder="What is the main language used in Flutter?" />
                       </Form.Item>
 
                       <div
@@ -247,7 +245,7 @@ export default function McqModal({
                             { required: true, message: "Enter option A" },
                           ]}
                         >
-                          <Input placeholder="Java" />
+                          <RichTextEditor placeholder="Java" minHeight={44} />
                         </Form.Item>
                         <Form.Item
                           name={[field.name, "optionB"]}
@@ -256,7 +254,7 @@ export default function McqModal({
                             { required: true, message: "Enter option B" },
                           ]}
                         >
-                          <Input placeholder="Dart" />
+                          <RichTextEditor placeholder="Dart" minHeight={44} />
                         </Form.Item>
                         <Form.Item
                           name={[field.name, "optionC"]}
@@ -265,7 +263,7 @@ export default function McqModal({
                             { required: true, message: "Enter option C" },
                           ]}
                         >
-                          <Input placeholder="Python" />
+                          <RichTextEditor placeholder="Python" minHeight={44} />
                         </Form.Item>
                         <Form.Item
                           name={[field.name, "optionD"]}
@@ -274,7 +272,7 @@ export default function McqModal({
                             { required: true, message: "Enter option D" },
                           ]}
                         >
-                          <Input placeholder="Kotlin" />
+                          <RichTextEditor placeholder="Kotlin" minHeight={44} />
                         </Form.Item>
                       </div>
 
@@ -310,10 +308,7 @@ export default function McqModal({
                           name={[field.name, "explanation"]}
                           label="Explanation"
                         >
-                          <Input.TextArea
-                            rows={2}
-                            placeholder="Explain why this is correct"
-                          />
+                          <RichTextEditor placeholder="Explain why this is correct" />
                         </Form.Item>
                       </div>
                     </Card>

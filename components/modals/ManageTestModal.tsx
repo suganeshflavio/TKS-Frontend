@@ -12,6 +12,8 @@ import {
   useUpdateQuestionMutation,
   useUpdateTestMutation,
 } from "@/store/features/testsApi";
+import RichTextEditor from "../common/RichTextEditor";
+import RichContent from "../common/RichContent";
 
 const { Text } = Typography;
 
@@ -209,42 +211,35 @@ export default function ManageTestModal({ open, testId, onClose }: Props) {
                   >
                     {editingQuestionId === question.id ? (
                       <div style={{ display: "grid", gap: 12 }}>
-                        <Input.TextArea
-                          rows={2}
+                        <RichTextEditor
                           value={draftQuestion?.question ?? ""}
-                          onChange={(event) =>
-                            setDraftQuestion((prev) => ({ ...(prev ?? {}), question: event.target.value }))
-                          }
+                          onChange={(html) => setDraftQuestion((prev) => ({ ...(prev ?? {}), question: html }))}
                           placeholder="Question"
                         />
                         <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
-                          <Input
+                          <RichTextEditor
                             value={draftQuestion?.optionA ?? ""}
-                            onChange={(event) =>
-                              setDraftQuestion((prev) => ({ ...(prev ?? {}), optionA: event.target.value }))
-                            }
+                            onChange={(html) => setDraftQuestion((prev) => ({ ...(prev ?? {}), optionA: html }))}
                             placeholder="Option A"
+                            minHeight={44}
                           />
-                          <Input
+                          <RichTextEditor
                             value={draftQuestion?.optionB ?? ""}
-                            onChange={(event) =>
-                              setDraftQuestion((prev) => ({ ...(prev ?? {}), optionB: event.target.value }))
-                            }
+                            onChange={(html) => setDraftQuestion((prev) => ({ ...(prev ?? {}), optionB: html }))}
                             placeholder="Option B"
+                            minHeight={44}
                           />
-                          <Input
+                          <RichTextEditor
                             value={draftQuestion?.optionC ?? ""}
-                            onChange={(event) =>
-                              setDraftQuestion((prev) => ({ ...(prev ?? {}), optionC: event.target.value }))
-                            }
+                            onChange={(html) => setDraftQuestion((prev) => ({ ...(prev ?? {}), optionC: html }))}
                             placeholder="Option C"
+                            minHeight={44}
                           />
-                          <Input
+                          <RichTextEditor
                             value={draftQuestion?.optionD ?? ""}
-                            onChange={(event) =>
-                              setDraftQuestion((prev) => ({ ...(prev ?? {}), optionD: event.target.value }))
-                            }
+                            onChange={(html) => setDraftQuestion((prev) => ({ ...(prev ?? {}), optionD: html }))}
                             placeholder="Option D"
+                            minHeight={44}
                           />
                         </div>
                         <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
@@ -258,12 +253,9 @@ export default function ManageTestModal({ open, testId, onClose }: Props) {
                             ]}
                             onChange={(value) => setDraftQuestion((prev) => ({ ...(prev ?? {}), correctOption: value }))}
                           />
-                          <Input.TextArea
-                            rows={2}
+                          <RichTextEditor
                             value={draftQuestion?.explanation ?? ""}
-                            onChange={(event) =>
-                              setDraftQuestion((prev) => ({ ...(prev ?? {}), explanation: event.target.value }))
-                            }
+                            onChange={(html) => setDraftQuestion((prev) => ({ ...(prev ?? {}), explanation: html }))}
                             placeholder="Explanation"
                           />
                         </div>
@@ -284,7 +276,9 @@ export default function ManageTestModal({ open, testId, onClose }: Props) {
                     ) : (
                       <div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                          <Text strong>{question.question ?? "Untitled question"}</Text>
+                          <Text strong>
+                            <RichContent html={question.question} fallback="Untitled question" />
+                          </Text>
                           <Space>
                             <Button
                               size="small"
@@ -315,19 +309,18 @@ export default function ManageTestModal({ open, testId, onClose }: Props) {
                             </Button>
                           </Space>
                         </div>
-                        <div style={{ marginTop: 8 }}>
-                          <Text type="secondary">A. {question.optionA || "-"}</Text>
-                          <br />
-                          <Text type="secondary">B. {question.optionB || "-"}</Text>
-                          <br />
-                          <Text type="secondary">C. {question.optionC || "-"}</Text>
-                          <br />
-                          <Text type="secondary">D. {question.optionD || "-"}</Text>
+                        <div style={{ marginTop: 8, display: "grid", gap: 4 }}>
+                          <Text type="secondary">A. <RichContent html={question.optionA} /></Text>
+                          <Text type="secondary">B. <RichContent html={question.optionB} /></Text>
+                          <Text type="secondary">C. <RichContent html={question.optionC} /></Text>
+                          <Text type="secondary">D. <RichContent html={question.optionD} /></Text>
                         </div>
                         <div style={{ marginTop: 8 }}>
                           <Text type="secondary">Correct option: {question.correctOption || "-"}</Text>
                         </div>
-                        <Text type="secondary">Explanation: {question.explanation || "-"}</Text>
+                        <Text type="secondary">
+                          Explanation: <RichContent html={question.explanation} />
+                        </Text>
                       </div>
                     )}
                   </div>

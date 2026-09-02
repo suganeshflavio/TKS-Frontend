@@ -5,10 +5,22 @@ export type UserAccessVideoDetail = {
   videoName: string;
 };
 
+export type UserAccessNotesDetail = {
+  notesId: string;
+  title: string;
+};
+
+export type UserAccessMcqTestDetail = {
+  testId: string;
+  testName: string;
+};
+
 export type UserAccessCourseDetail = {
   courseId: string;
   courseName?: string;
   videos: UserAccessVideoDetail[];
+  notes: UserAccessNotesDetail[];
+  mcqTests: UserAccessMcqTestDetail[];
 };
 
 export type UserAccessDetail = {
@@ -24,6 +36,8 @@ export type UserAccessDetail = {
 export type SaveUserAccessCourse = {
   courseId: string;
   videoIds: string[];
+  notesIds: string[];
+  testIds: string[];
 };
 
 export type SaveUserAccessRequest = {
