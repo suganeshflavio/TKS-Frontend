@@ -7,6 +7,7 @@ import {
   CommentOutlined,
   FileTextOutlined,
   FormOutlined,
+  MailOutlined,
   ReadOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -23,6 +24,7 @@ import Notes from "@/components/layout/Notes";
 import McqTests from "@/components/layout/McqTests";
 import Userlist from "@/components/layout/Userlist";
 import Comments from "@/components/layout/Comments";
+import Enquiries from "@/components/layout/Enquiries";
 import Testimonials from "@/components/layout/Testimonials";
 // import PaymentList from "@/components/layout/PaymentList";
 import {
@@ -74,6 +76,7 @@ const items: MenuItem[] = [
   getItem("Engagement", "sub3", <CommentOutlined />, [
     getItem("Comments", "6", <CommentOutlined />),
     getItem("Testimonials", "7", <StarOutlined />),
+    getItem("Enquiries", "10", <MailOutlined />),
   ]),
 ];
 
@@ -123,6 +126,9 @@ const App: React.FC = () => {
 
       case "7":
         return <Testimonials />;
+
+      case "10":
+        return <Enquiries />;
 
       // case "5":
       //   return <PaymentList />;

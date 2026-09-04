@@ -55,6 +55,12 @@ import TopicContentModal from "../modals/TopicContentModal";
 
 const { Title, Text } = Typography;
 
+type ApiError = {
+  data?: {
+    message?: string;
+  };
+  status?: number;
+};
 type EditTarget<T> = { mode: "create" } | { mode: "edit"; record: T } | null;
 
 function ColumnCard<T extends { id: string; name: string; isActive?: boolean }>({
@@ -278,7 +284,11 @@ export default function Curriculum() {
       }
       setSubjectModal(null);
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to save subject.");
+      const apiError = error as ApiError;
+      // message.error((error as Error)?.data?.message || "Unable to save subject.");
+      message.error(
+        apiError.data?.message || "Unable to save subject."
+      );
     }
   };
 
@@ -449,7 +459,7 @@ export default function Curriculum() {
           items={topics}
           loading={isFetchingTopics}
           selectedId={null}
-          onSelect={() => {}}
+          onSelect={() => { }}
           onAdd={() => setTopicModal({ mode: "create" })}
           onEdit={(record) => setTopicModal({ mode: "edit", record })}
           onToggleActive={(record) =>

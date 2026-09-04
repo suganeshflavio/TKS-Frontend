@@ -51,6 +51,7 @@ export const appApi = createApi({
     "Chapter",
     "Topic",
     "Notes",
+    "Enquiry",
   ],
   endpoints: () => ({}),
 });
