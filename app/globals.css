@@ -24,3 +24,46 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Rich text editor / content (question, options, explanation) */
+.rte-content {
+  outline: none;
+  min-height: 1.5em;
+}
+
+.rte-content p {
+  margin: 0 0 4px;
+}
+
+.rte-content p:last-child {
+  margin-bottom: 0;
+}
+
+.rte-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #bfbfbf;
+  pointer-events: none;
+  height: 0;
+}
+
+.rte-content img,
+.rich-content img {
+  max-width: 100%;
+  max-height: 240px;
+  border-radius: 4px;
+}
+
+.rich-content p {
+  margin: 0 0 4px;
+}
+
+.rich-content p:last-child {
+  margin-bottom: 0;
+}
+
+.rte-math,
+.rich-content .rte-math {
+  display: inline-block;
+  padding: 0 2px;
+}

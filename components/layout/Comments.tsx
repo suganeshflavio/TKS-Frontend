@@ -216,7 +216,7 @@ export default function Comments() {
 
         <Input.Search
           allowClear
-          placeholder="Search by course, subject, chapter, or video"
+          placeholder="Search by video name"
           value={searchText}
           onChange={(event) => {
             setPage(1);
@@ -237,13 +237,8 @@ export default function Comments() {
               key: group.videoId,
               label: (
                 <div>
-                  <Text strong>
-                    {group.courseName} / {group.subjectName} / {group.chapterName}
-                  </Text>
-                  <div>
-                    <Text type="secondary">{group.videoName}</Text>{" "}
-                    <Tag icon={<CommentOutlined />}>{group.comments.length}</Tag>
-                  </div>
+                  <Text strong>{group.videoName}</Text>{" "}
+                  <Tag icon={<CommentOutlined />}>{group.comments.length}</Tag>
                 </div>
               ),
               children: (

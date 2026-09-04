@@ -1,67 +1,59 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
+import { Button, Card, Input, InputNumber, Modal, Select, Space, Spin, Typography, message } from "antd";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { skipToken } from "@reduxjs/toolkit/query";
 import {
-  Button,
-  Card,
-  Empty,
-  Input,
-  InputNumber,
-  Modal,
-  Select,
-  Space,
-  Tag,
-  Typography,
-  message,
-} from "antd";
-import { DeleteOutlined, EditOutlined, EyeOutlined } from "@ant-design/icons";
-import {
-  type TestItem,
   type TestQuestion,
+  useAddQuestionMutation,
   useDeleteQuestionMutation,
-  useDeleteTestMutation,
-  useGetTestsQuery,
+  useGetTestByIdQuery,
   useUpdateQuestionMutation,
   useUpdateTestMutation,
 } from "@/store/features/testsApi";
-import { skipToken } from "@reduxjs/toolkit/query";
+import RichTextEditor from "../common/RichTextEditor";
+import RichContent from "../common/RichContent";
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 interface Props {
   readonly open: boolean;
-  readonly onCancel: () => void;
-  readonly videoId?: string;
-  readonly videoName?: string;
-  readonly onViewAttempts?: (testId?: string, testName?: string) => void;
+  readonly testId?: string;
+  readonly onClose: () => void;
 }
 
-type TestCardProps = {
-  readonly test: TestItem;
-  readonly onDeleteTest: (testId: string) => Promise<void>;
-  readonly onViewAttempts?: (testId?: string, testName?: string) => void;
-};
-
-function TestCard({ test, onDeleteTest, onViewAttempts }: TestCardProps) {
-  const [expanded, setExpanded] = useState(false);
-  const [editingTest, setEditingTest] = useState(false);
-  const [draftTestName, setDraftTestName] = useState(test.testName ?? "");
-  const [draftMarks, setDraftMarks] = useState(test.marksPerQuestion ?? 1);
-  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
-  const [draftQuestion, setDraftQuestion] = useState<Partial<TestQuestion> | null>(null);
+export default function ManageTestModal({ open, testId, onClose }: Props) {
+  const {
+    data: test,
+    refetch: refetchTest,
+    isFetching: isFetchingTest,
+  } = useGetTestByIdQuery(open && testId ? testId : skipToken);
 
   const [updateTest, { isLoading: isUpdatingTest }] = useUpdateTestMutation();
+  const [addQuestion, { isLoading: isAddingQuestion }] = useAddQuestionMutation();
   const [updateQuestion, { isLoading: isUpdatingQuestion }] = useUpdateQuestionMutation();
   const [deleteQuestion, { isLoading: isDeletingQuestion }] = useDeleteQuestionMutation();
-  const [deleteTest, { isLoading: isDeletingTest }] = useDeleteTestMutation();
 
-  useEffect(() => {
+  const [editingTest, setEditingTest] = useState(false);
+  const [draftTestName, setDraftTestName] = useState("");
+  const [draftMarks, setDraftMarks] = useState(1);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
+  const [draftQuestion, setDraftQuestion] = useState<Partial<TestQuestion> | null>(null);
+  const [loadedTestId, setLoadedTestId] = useState<string | undefined>(undefined);
+
+  if (test && test.id !== loadedTestId) {
+    setLoadedTestId(test.id);
     setDraftTestName(test.testName ?? "");
     setDraftMarks(test.marksPerQuestion ?? 1);
     setEditingTest(false);
     setEditingQuestionId(null);
     setDraftQuestion(null);
-  }, [test.id, test.testName, test.marksPerQuestion]);
+  }
+
+  if (!testId) {
+    return null;
+  }
 
   const handleSaveTest = async () => {
     const trimmedName = draftTestName.trim();
@@ -71,14 +63,7 @@ function TestCard({ test, onDeleteTest, onViewAttempts }: TestCardProps) {
     }
 
     try {
-      await updateTest({
-        id: test.id,
-        body: {
-          testName: trimmedName,
-          marksPerQuestion: draftMarks,
-        },
-      }).unwrap();
-
+      await updateTest({ id: testId, body: { testName: trimmedName, marksPerQuestion: draftMarks } }).unwrap();
       message.success("Test updated successfully.");
       setEditingTest(false);
     } catch (error: unknown) {
@@ -86,14 +71,34 @@ function TestCard({ test, onDeleteTest, onViewAttempts }: TestCardProps) {
     }
   };
 
-  const handleDeleteQuestion = async (question: TestQuestion) => {
-    if (!question.id) {
-      message.error("This question cannot be deleted because it has no id.");
-      return;
+  const handleAddQuestion = async () => {
+    try {
+      await addQuestion({
+        id: testId,
+        body: {
+          question: "New question",
+          optionA: "",
+          optionB: "",
+          optionC: "",
+          optionD: "",
+          correctOption: "A",
+          explanation: "",
+        },
+      }).unwrap();
+
+      await refetchTest();
+      message.success("New question added.");
+    } catch (error: unknown) {
+      message.error((error as Error)?.message || "Unable to add question.");
     }
+  };
+
+  const handleDeleteQuestion = async (question: TestQuestion) => {
+    if (!question.id) return;
 
     try {
-      await deleteQuestion({ id: test.id, questionId: question.id }).unwrap();
+      await deleteQuestion({ id: testId, questionId: question.id }).unwrap();
+      await refetchTest();
       message.success("Question deleted successfully.");
     } catch (error: unknown) {
       message.error((error as Error)?.message || "Unable to delete question.");
@@ -101,18 +106,14 @@ function TestCard({ test, onDeleteTest, onViewAttempts }: TestCardProps) {
   };
 
   const handleSaveQuestion = async () => {
-    if (!draftQuestion?.question?.trim()) {
+    if (!draftQuestion?.question?.trim() || !editingQuestionId) {
       message.error("Enter the question text before saving.");
-      return;
-    }
-
-    if (!editingQuestionId) {
       return;
     }
 
     try {
       await updateQuestion({
-        id: test.id,
+        id: testId,
         questionId: editingQuestionId,
         body: {
           question: draftQuestion.question?.trim(),
@@ -126,6 +127,7 @@ function TestCard({ test, onDeleteTest, onViewAttempts }: TestCardProps) {
       }).unwrap();
 
       message.success("Question updated successfully.");
+      await refetchTest();
       setEditingQuestionId(null);
       setDraftQuestion(null);
     } catch (error: unknown) {
@@ -133,38 +135,29 @@ function TestCard({ test, onDeleteTest, onViewAttempts }: TestCardProps) {
     }
   };
 
-  return (
-    <Card key={test.id} size="small">
-      <Space align="center" style={{ display: "flex", justifyContent: "space-between", width: "100%" }} wrap>
-        <div>
-          <Title level={5} style={{ marginBottom: 4 }}>{test.testName ?? "Untitled Test"}</Title>
-          <Text type="secondary">
-            Questions: {test._count?.questions ?? test.questions?.length ?? 0} • Marks: {test.marksPerQuestion ?? 1}
-          </Text>
-          <div style={{ marginTop: 8 }}>
-            <Tag color="blue">{test._count?.attempts ?? 0} attempts</Tag>
-          </div>
-        </div>
-        <Space>
-          <Button onClick={() => setExpanded((prev) => !prev)}>
-            {expanded ? "Hide" : "View"}
-          </Button>
-          <Button icon={<EyeOutlined />} onClick={() => onViewAttempts?.(test.id, test.testName)}>
-            Attempts
-          </Button>
-          <Button danger icon={<DeleteOutlined />} loading={isDeletingTest} onClick={() => onDeleteTest(test.id)}>
-            Delete Test
-          </Button>
-        </Space>
-      </Space>
+  const questions = test?.questions ?? [];
 
-      {expanded ? (
-        <div style={{ marginTop: 16, display: "grid", gap: 16 }}>
+  return (
+    <Modal
+      title={test?.testName ? `Manage "${test.testName}"` : "Manage Test"}
+      open={open}
+      maskClosable={false}
+      onCancel={onClose}
+      footer={<Button onClick={onClose}>Close</Button>}
+      width={840}
+      destroyOnHidden
+    >
+      {isFetchingTest ? (
+        <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
+          <Spin />
+        </div>
+      ) : (
+        <div style={{ display: "grid", gap: 16 }}>
           <Card size="small">
             <Space style={{ display: "flex", justifyContent: "space-between", width: "100%" }} align="center" wrap>
               <Text strong>Test details</Text>
               {!editingTest ? (
-                <Button icon={<EditOutlined />} onClick={() => setEditingTest(true)}>
+                <Button size="small" icon={<EditOutlined />} onClick={() => setEditingTest(true)}>
                   Edit Test
                 </Button>
               ) : null}
@@ -192,50 +185,61 @@ function TestCard({ test, onDeleteTest, onViewAttempts }: TestCardProps) {
               </div>
             ) : (
               <div style={{ marginTop: 12 }}>
-                <Text>{test.testName ?? "Untitled Test"}</Text>
+                <Text>{test?.testName ?? "Untitled Test"}</Text>
                 <div>
-                  <Text type="secondary">Marks per question: {test.marksPerQuestion ?? 1}</Text>
+                  <Text type="secondary">Marks per question: {test?.marksPerQuestion ?? 1}</Text>
                 </div>
               </div>
             )}
           </Card>
 
           <Card size="small">
-            <Text strong>Questions</Text>
+            <Space style={{ display: "flex", justifyContent: "space-between", width: "100%" }} align="center" wrap>
+              <Text strong>Questions</Text>
+              <Button type="dashed" onClick={() => void handleAddQuestion()} loading={isAddingQuestion}>
+                Add Question
+              </Button>
+            </Space>
             <div style={{ marginTop: 12, display: "grid", gap: 12 }}>
-              {(test.questions ?? []).length === 0 ? (
+              {questions.length === 0 ? (
                 <Text type="secondary">No questions yet.</Text>
               ) : (
-                (test.questions ?? []).map((question) => (
-                  <div key={question.id ?? `${test.id}-${question.question}`} style={{ border: "1px solid #f0f0f0", borderRadius: 8, padding: 12 }}>
+                questions.map((question) => (
+                  <div
+                    key={question.id ?? `${testId}-${question.question}`}
+                    style={{ border: "1px solid #f0f0f0", borderRadius: 8, padding: 12 }}
+                  >
                     {editingQuestionId === question.id ? (
                       <div style={{ display: "grid", gap: 12 }}>
-                        <Input.TextArea
-                          rows={2}
+                        <RichTextEditor
                           value={draftQuestion?.question ?? ""}
-                          onChange={(event) => setDraftQuestion((prev) => ({ ...(prev ?? {}), question: event.target.value }))}
+                          onChange={(html) => setDraftQuestion((prev) => ({ ...(prev ?? {}), question: html }))}
                           placeholder="Question"
                         />
                         <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
-                          <Input
+                          <RichTextEditor
                             value={draftQuestion?.optionA ?? ""}
-                            onChange={(event) => setDraftQuestion((prev) => ({ ...(prev ?? {}), optionA: event.target.value }))}
+                            onChange={(html) => setDraftQuestion((prev) => ({ ...(prev ?? {}), optionA: html }))}
                             placeholder="Option A"
+                            minHeight={44}
                           />
-                          <Input
+                          <RichTextEditor
                             value={draftQuestion?.optionB ?? ""}
-                            onChange={(event) => setDraftQuestion((prev) => ({ ...(prev ?? {}), optionB: event.target.value }))}
+                            onChange={(html) => setDraftQuestion((prev) => ({ ...(prev ?? {}), optionB: html }))}
                             placeholder="Option B"
+                            minHeight={44}
                           />
-                          <Input
+                          <RichTextEditor
                             value={draftQuestion?.optionC ?? ""}
-                            onChange={(event) => setDraftQuestion((prev) => ({ ...(prev ?? {}), optionC: event.target.value }))}
+                            onChange={(html) => setDraftQuestion((prev) => ({ ...(prev ?? {}), optionC: html }))}
                             placeholder="Option C"
+                            minHeight={44}
                           />
-                          <Input
+                          <RichTextEditor
                             value={draftQuestion?.optionD ?? ""}
-                            onChange={(event) => setDraftQuestion((prev) => ({ ...(prev ?? {}), optionD: event.target.value }))}
+                            onChange={(html) => setDraftQuestion((prev) => ({ ...(prev ?? {}), optionD: html }))}
                             placeholder="Option D"
+                            minHeight={44}
                           />
                         </div>
                         <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
@@ -249,18 +253,19 @@ function TestCard({ test, onDeleteTest, onViewAttempts }: TestCardProps) {
                             ]}
                             onChange={(value) => setDraftQuestion((prev) => ({ ...(prev ?? {}), correctOption: value }))}
                           />
-                          <Input.TextArea
-                            rows={2}
+                          <RichTextEditor
                             value={draftQuestion?.explanation ?? ""}
-                            onChange={(event) => setDraftQuestion((prev) => ({ ...(prev ?? {}), explanation: event.target.value }))}
+                            onChange={(html) => setDraftQuestion((prev) => ({ ...(prev ?? {}), explanation: html }))}
                             placeholder="Explanation"
                           />
                         </div>
                         <Space>
-                          <Button onClick={() => {
-                            setEditingQuestionId(null);
-                            setDraftQuestion(null);
-                          }}>
+                          <Button
+                            onClick={() => {
+                              setEditingQuestionId(null);
+                              setDraftQuestion(null);
+                            }}
+                          >
                             Cancel
                           </Button>
                           <Button type="primary" loading={isUpdatingQuestion} onClick={() => void handleSaveQuestion()}>
@@ -271,7 +276,9 @@ function TestCard({ test, onDeleteTest, onViewAttempts }: TestCardProps) {
                     ) : (
                       <div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                          <Text strong>{question.question ?? "Untitled question"}</Text>
+                          <Text strong>
+                            <RichContent html={question.question} fallback="Untitled question" />
+                          </Text>
                           <Space>
                             <Button
                               size="small"
@@ -302,18 +309,18 @@ function TestCard({ test, onDeleteTest, onViewAttempts }: TestCardProps) {
                             </Button>
                           </Space>
                         </div>
-                        <div style={{ marginTop: 8 }}>
-                          <Text type="secondary">A. {question.optionA || "-"}</Text>
-                          <br />
-                          <Text type="secondary">B. {question.optionB || "-"}</Text>
-                          <br />
-                          <Text type="secondary">C. {question.optionC || "-"}</Text>
-                          <br />
-                          <Text type="secondary">D. {question.optionD || "-"}</Text>
+                        <div style={{ marginTop: 8, display: "grid", gap: 4 }}>
+                          <Text type="secondary">A. <RichContent html={question.optionA} /></Text>
+                          <Text type="secondary">B. <RichContent html={question.optionB} /></Text>
+                          <Text type="secondary">C. <RichContent html={question.optionC} /></Text>
+                          <Text type="secondary">D. <RichContent html={question.optionD} /></Text>
                         </div>
                         <div style={{ marginTop: 8 }}>
                           <Text type="secondary">Correct option: {question.correctOption || "-"}</Text>
                         </div>
+                        <Text type="secondary">
+                          Explanation: <RichContent html={question.explanation} />
+                        </Text>
                       </div>
                     )}
                   </div>
@@ -322,53 +329,7 @@ function TestCard({ test, onDeleteTest, onViewAttempts }: TestCardProps) {
             </div>
           </Card>
         </div>
-      ) : null}
-    </Card>
-  );
-}
-
-export default function ExistingTestsModal({ open, onCancel, videoId, videoName, onViewAttempts }: Props) {
-  const [deleteTest, { isLoading: isDeletingTest }] = useDeleteTestMutation();
-  const { data, isFetching, refetch } = useGetTestsQuery(videoId ? { page: 1, limit: 50, videoId } : skipToken);
-  const tests = useMemo(() => data?.tests ?? [], [data]);
-
-  const handleDeleteTest = async (testId: string) => {
-    try {
-      await deleteTest(testId).unwrap();
-      message.success("Test deleted successfully.");
-      await refetch();
-    } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to delete test.");
-    }
-  };
-
-  return (
-    <Modal
-      title={videoName ? `Tests for ${videoName}` : "Existing Tests"}
-      open={open}
-      onCancel={onCancel}
-      width={760}
-      footer={null}
-      destroyOnHidden
-    >
-      <Space direction="vertical" style={{ width: "100%" }}>
-        {isFetching ? (
-          <Text type="secondary">Loading tests...</Text>
-        ) : tests.length === 0 ? (
-          <Empty description="No tests created for this video yet." />
-        ) : (
-          <Space direction="vertical" style={{ width: "100%" }}>
-            {tests.map((test) => (
-              <TestCard
-                key={test.id}
-                test={test}
-                onDeleteTest={handleDeleteTest}
-                onViewAttempts={onViewAttempts}
-              />
-            ))}
-          </Space>
-        )}
-      </Space>
+      )}
     </Modal>
   );
 }

@@ -1,30 +1,21 @@
 import { appApi } from "../api";
 import type { PaginatedResponse } from "./coursesApi";
 
-interface Course {
-  courseName?: string;
-}
 export type VideoItem = {
   id: string;
   isActive?: boolean;
   IsActive?: boolean;
-  courseId?: string;
-  classKey?: string;
-  course?: Course;
-  subject?: string;
-  chapter?: string;
-  youtubeUrl?: string;
-  notesFileName?: string;
-  videoUrl?: string;
-  topicName?: string;
   videoName?: string;
   title?: string;
   description?: string;
-  notesUrl?: string;
-  fileName?: string;
+  duration?: string;
+  isPreview?: boolean;
+  videoUrl?: string;
   videoFileId?: string;
   videoFileName?: string;
   videoSize?: number;
+  topics?: { id: string; name: string }[];
+  courses?: { courseId: string; order?: number; isActive?: boolean; course?: { id: string; courseName: string } }[];
 };
 
 type VideoQueryParams = {
@@ -35,7 +26,6 @@ type VideoQueryParams = {
 
 export type VideoUploadUrlRequest = {
   fileName: string;
-  courseId?: string;
 };
 
 export type VideoUploadUrlResponse = {
@@ -54,6 +44,28 @@ const unwrapVideo = (response: unknown): VideoItem => {
   }
 
   return response as VideoItem;
+};
+
+const unwrapVideosList = (response: unknown): PaginatedResponse<VideoItem> => {
+  if (response && typeof response === "object" && !Array.isArray(response)) {
+    const data = (response as Record<string, unknown>).data;
+
+    if (data && typeof data === "object" && !Array.isArray(data)) {
+      const record = data as Record<string, unknown>;
+      const list = record.videos;
+
+      if (Array.isArray(list)) {
+        return {
+          data: list as VideoItem[],
+          total: record.total as number | undefined,
+          page: record.page as number | undefined,
+          limit: record.limit as number | undefined,
+        };
+      }
+    }
+  }
+
+  return { data: [] };
 };
 
 const unwrapVideoUploadUrl = (response: unknown): VideoUploadUrlResponse => {
@@ -80,14 +92,16 @@ export const videosApi = appApi.injectEndpoints({
           ...(search ? { search } : {}),
         },
       }),
+      transformResponse: unwrapVideosList,
       providesTags: ["Video"],
     }),
-    createVideo: builder.mutation<VideoItem, FormData>({
+    createVideo: builder.mutation<VideoItem, Partial<VideoItem>>({
       query: (body) => ({
         url: "/videos",
         method: "POST",
         body,
       }),
+      transformResponse: unwrapVideo,
       invalidatesTags: ["Video"],
     }),
     getVideoById: builder.query<VideoItem, string>({
@@ -98,12 +112,13 @@ export const videosApi = appApi.injectEndpoints({
       transformResponse: unwrapVideo,
       providesTags: ["Video"],
     }),
-    updateVideo: builder.mutation<VideoItem, { id: string; body: Partial<VideoItem> | FormData }>({
+    updateVideo: builder.mutation<VideoItem, { id: string; body: Partial<VideoItem> }>({
       query: ({ id, body }) => ({
         url: `/videos/${id}`,
         method: "PUT",
         body,
       }),
+      transformResponse: unwrapVideo,
       invalidatesTags: ["Video"],
     }),
     permanentDeleteVideo: builder.mutation<{ success?: boolean }, string>({
