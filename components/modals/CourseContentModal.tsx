@@ -109,8 +109,6 @@ function LinkSection<T extends { id: string; label: string }>({
 
 type CourseSubjectLink = NonNullable<CourseItem["subjects"]>[number];
 
-const ALL_CLASSES = "__all__";
-
 function SubjectLinkSection({
   linked,
   subjectOptions,
@@ -134,14 +132,16 @@ function SubjectLinkSection({
   const classOptions = classesData?.data ?? [];
 
   const alreadyLinkedForSubject = useMemo(
-    () => linked.filter((item) => item.subject.id === subjectId).map((item) => item.class?.id ?? ALL_CLASSES),
+    () =>
+      linked
+        .filter((item) => item.subject.id === subjectId && item.class?.id)
+        .map((item) => item.class!.id),
     [linked, subjectId],
   );
 
-  const classSelectOptions = [
-    { value: ALL_CLASSES, label: "All classes (auto-detect from student)" },
-    ...classOptions.map((c) => ({ value: c.id, label: c.name })),
-  ].filter((option) => !alreadyLinkedForSubject.includes(option.value));
+  const classSelectOptions = classOptions
+    .map((c) => ({ value: c.id, label: c.name }))
+    .filter((option) => !alreadyLinkedForSubject.includes(option.value));
 
   const reset = () => {
     setSubjectId(undefined);
@@ -197,17 +197,17 @@ function SubjectLinkSection({
           placeholder="Class"
           disabled={!subjectId}
           loading={isLoadingClasses}
-          value={subjectId ? (classId ?? ALL_CLASSES) : undefined}
+          value={classId}
           options={classSelectOptions}
-          onChange={(value) => setClassId(value === ALL_CLASSES ? undefined : value)}
+          onChange={(value) => setClassId(value)}
         />
         <InputNumber placeholder="Order (optional)" value={order} onChange={(value) => setOrder(value)} />
         <Button
           type="primary"
           loading={isLinking}
-          disabled={!subjectId}
+          disabled={!subjectId || !classId}
           onClick={() => {
-            if (subjectId) {
+            if (subjectId && classId) {
               onAdd(subjectId, classId, order ?? undefined);
               reset();
             }
