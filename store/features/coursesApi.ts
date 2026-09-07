@@ -16,7 +16,12 @@ export type CourseItem = {
   bannerFileName?: string;
   thumbnail?: string;
   enableEmi?: boolean;
-  subjects?: { order?: number; subject: { id: string; name: string } }[];
+  subjects?: {
+    id: string;
+    order?: number;
+    subject: { id: string; name: string };
+    class?: { id: string; name: string } | null;
+  }[];
   videos?: { order?: number; isActive?: boolean; video: { id: string; videoName: string; isActive?: boolean } }[];
   notes?: { order?: number; isActive?: boolean; notes: { id: string; title: string; isActive?: boolean } }[];
   mcqTests?: { order?: number; isActive?: boolean; test: { id: string; testName: string } }[];
@@ -115,17 +120,20 @@ export const coursesApi = appApi.injectEndpoints({
       }),
       invalidatesTags: ["Course"],
     }),
-    linkCourseSubject: builder.mutation<unknown, { courseId: string; subjectId: string; order?: number }>({
-      query: ({ courseId, subjectId, order }) => ({
+    linkCourseSubject: builder.mutation<
+      unknown,
+      { courseId: string; subjectId: string; classId?: string; order?: number }
+    >({
+      query: ({ courseId, subjectId, classId, order }) => ({
         url: `/courses/${courseId}/subjects`,
         method: "POST",
-        body: { subjectId, order },
+        body: { subjectId, classId, order },
       }),
       invalidatesTags: ["Course"],
     }),
-    unlinkCourseSubject: builder.mutation<unknown, { courseId: string; subjectId: string }>({
-      query: ({ courseId, subjectId }) => ({
-        url: `/courses/${courseId}/subjects/${subjectId}`,
+    unlinkCourseSubject: builder.mutation<unknown, { courseId: string; linkId: string }>({
+      query: ({ courseId, linkId }) => ({
+        url: `/courses/${courseId}/subjects/${linkId}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Course"],

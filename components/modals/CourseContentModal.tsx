@@ -14,8 +14,10 @@ import {
   useUnlinkCourseNotesMutation,
   useUnlinkCourseSubjectMutation,
   useUnlinkCourseVideoMutation,
+  type CourseItem,
 } from "@/store/features/coursesApi";
 import { useGetSubjectsQuery } from "@/store/features/subjectsApi";
+import { useGetClassesQuery } from "@/store/features/classesApi";
 import { useGetVideosQuery } from "@/store/features/videosApi";
 import { useGetNotesListQuery } from "@/store/features/notesApi";
 import { useGetTestsQuery } from "@/store/features/testsApi";
@@ -105,6 +107,119 @@ function LinkSection<T extends { id: string; label: string }>({
   );
 }
 
+type CourseSubjectLink = NonNullable<CourseItem["subjects"]>[number];
+
+const ALL_CLASSES = "__all__";
+
+function SubjectLinkSection({
+  linked,
+  subjectOptions,
+  isLinking,
+  onAdd,
+  onRemove,
+}: {
+  linked: CourseSubjectLink[];
+  subjectOptions: { id: string; label: string }[];
+  isLinking: boolean;
+  onAdd: (subjectId: string, classId: string | undefined, order?: number) => void;
+  onRemove: (linkId: string) => void;
+}) {
+  const [subjectId, setSubjectId] = useState<string | undefined>();
+  const [classId, setClassId] = useState<string | undefined>();
+  const [order, setOrder] = useState<number | null>(null);
+
+  const { data: classesData, isFetching: isLoadingClasses } = useGetClassesQuery(
+    subjectId ? { subjectId, limit: 200 } : skipToken,
+  );
+  const classOptions = classesData?.data ?? [];
+
+  const alreadyLinkedForSubject = useMemo(
+    () => linked.filter((item) => item.subject.id === subjectId).map((item) => item.class?.id ?? ALL_CLASSES),
+    [linked, subjectId],
+  );
+
+  const classSelectOptions = [
+    { value: ALL_CLASSES, label: "All classes (auto-detect from student)" },
+    ...classOptions.map((c) => ({ value: c.id, label: c.name })),
+  ].filter((option) => !alreadyLinkedForSubject.includes(option.value));
+
+  const reset = () => {
+    setSubjectId(undefined);
+    setClassId(undefined);
+    setOrder(null);
+  };
+
+  return (
+    <div>
+      <Text strong>Subjects</Text>
+      <div style={{ marginTop: 8 }}>
+        {linked.length === 0 ? (
+          <Empty description="No subjects linked yet." image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {linked.map((item) => (
+              <div
+                key={item.id}
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}
+              >
+                <Space size={4}>
+                  <Tag>{item.subject.name}</Tag>
+                  <Tag color={item.class ? "blue" : "default"}>{item.class ? item.class.name : "All classes"}</Tag>
+                </Space>
+                <Button
+                  size="small"
+                  type="text"
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={() => onRemove(item.id)}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <Space style={{ marginTop: 8, width: "100%" }} wrap>
+        <Select
+          showSearch
+          allowClear
+          style={{ minWidth: 200 }}
+          placeholder="Subject"
+          value={subjectId}
+          options={subjectOptions.map((option) => ({ value: option.id, label: option.label }))}
+          filterOption={(input, option) => (option?.label ?? "").toLowerCase().includes(input.toLowerCase())}
+          onChange={(value) => {
+            setSubjectId(value);
+            setClassId(undefined);
+          }}
+        />
+        <Select
+          style={{ minWidth: 220 }}
+          placeholder="Class"
+          disabled={!subjectId}
+          loading={isLoadingClasses}
+          value={subjectId ? (classId ?? ALL_CLASSES) : undefined}
+          options={classSelectOptions}
+          onChange={(value) => setClassId(value === ALL_CLASSES ? undefined : value)}
+        />
+        <InputNumber placeholder="Order (optional)" value={order} onChange={(value) => setOrder(value)} />
+        <Button
+          type="primary"
+          loading={isLinking}
+          disabled={!subjectId}
+          onClick={() => {
+            if (subjectId) {
+              onAdd(subjectId, classId, order ?? undefined);
+              reset();
+            }
+          }}
+        >
+          Link
+        </Button>
+      </Space>
+    </div>
+  );
+}
+
 export default function CourseContentModal({ open, courseId, courseName, onClose }: Props) {
   const { data: course } = useGetCourseByIdQuery(open && courseId ? courseId : skipToken);
 
@@ -139,10 +254,6 @@ export default function CourseContentModal({ open, courseId, courseName, onClose
     [testsData],
   );
 
-  const linkedSubjects = useMemo(
-    () => (course?.subjects ?? []).map((item) => ({ id: item.subject.id, label: item.subject.name })),
-    [course],
-  );
   const linkedVideos = useMemo(
     () => (course?.videos ?? []).map((item) => ({ id: item.video.id, label: item.video.videoName })),
     [course],
@@ -172,13 +283,14 @@ export default function CourseContentModal({ open, courseId, courseName, onClose
     >
       {!courseId ? null : (
         <Space direction="vertical" size="large" style={{ width: "100%" }} styles={{ item: { width: "100%" } }}>
-          <LinkSection
-            title="Subjects"
-            linked={linkedSubjects}
-            options={subjectOptions}
+          <SubjectLinkSection
+            linked={course?.subjects ?? []}
+            subjectOptions={subjectOptions}
             isLinking={isLinkingSubject}
-            onAdd={(subjectId, order) => guard(linkSubject({ courseId, subjectId, order }).unwrap(), "Subject linked.")}
-            onRemove={(subjectId) => guard(unlinkSubject({ courseId, subjectId }).unwrap(), "Subject unlinked.")}
+            onAdd={(subjectId, classId, order) =>
+              guard(linkSubject({ courseId, subjectId, classId, order }).unwrap(), "Subject linked.")
+            }
+            onRemove={(linkId) => guard(unlinkSubject({ courseId, linkId }).unwrap(), "Subject unlinked.")}
           />
           <Divider style={{ margin: "4px 0" }} />
           <LinkSection
