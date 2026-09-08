@@ -15,6 +15,7 @@ import {
   LoadingOutlined,
   PictureOutlined,
 } from "@ant-design/icons";
+import type { EditorView } from "@tiptap/pm/view";
 import { MathInline } from "./mathExtension";
 import FormulaEditorModal from "./FormulaEditorModal";
 import { useUploadInlineImageMutation } from "@/store/features/uploadsApi";
@@ -31,6 +32,69 @@ interface Props {
   readonly onChange?: (html: string) => void;
   readonly placeholder?: string;
   readonly minHeight?: number;
+}
+
+// Matches \(...\) and \[...\] LaTeX delimiters — the form users get when
+// copying a formula out of a textbook PDF, ChatGPT, or similar. Plain `$...$`
+// is deliberately not treated as math here since these fields also carry
+// ordinary text where a "$" is just a currency sign.
+const LATEX_DELIMITER = /\\\(([\s\S]+?)\\\)|\\\[([\s\S]+?)\\\]/g;
+
+/**
+ * Pasting LaTeX source as plain text (e.g. `\(k = A \cdot e^{-E_a/RT}\)`)
+ * would otherwise land in the document as literal, unrendered characters —
+ * the editor only turns LaTeX into a rendered formula when it comes through
+ * the formula-editor button. This intercepts paste, finds any LaTeX-delimited
+ * segments in the clipboard's plain text, and inserts each as a rendered
+ * `mathInline` node instead, leaving the surrounding text untouched.
+ */
+function handleMathPaste(view: EditorView, event: ClipboardEvent): boolean {
+  const text = event.clipboardData?.getData("text/plain");
+  if (!text) return false;
+
+  LATEX_DELIMITER.lastIndex = 0;
+  if (!LATEX_DELIMITER.test(text)) return false;
+
+  const mathNodeType = view.state.schema.nodes.mathInline;
+  if (!mathNodeType) return false;
+
+  event.preventDefault();
+
+  const { state } = view;
+  const { from, to } = state.selection;
+  let tr = state.tr;
+  if (from !== to) {
+    tr = tr.delete(from, to);
+  }
+  let pos = from;
+
+  LATEX_DELIMITER.lastIndex = 0;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = LATEX_DELIMITER.exec(text)) !== null) {
+    const plainSegment = text.slice(lastIndex, match.index);
+    if (plainSegment) {
+      tr = tr.insertText(plainSegment, pos);
+      pos += plainSegment.length;
+    }
+
+    const latex = (match[1] ?? match[2] ?? "").trim();
+    if (latex) {
+      tr = tr.insert(pos, mathNodeType.create({ latex }));
+      pos += 1;
+    }
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  const remaining = text.slice(lastIndex);
+  if (remaining) {
+    tr = tr.insertText(remaining, pos);
+  }
+
+  view.dispatch(tr);
+  return true;
 }
 
 export default function RichTextEditor({ value, onChange, placeholder, minHeight = 90 }: Props) {
@@ -59,6 +123,7 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
       attributes: {
         class: "rte-content",
       },
+      handlePaste: handleMathPaste,
     },
   });
 
