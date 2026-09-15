@@ -1001,7 +1001,7 @@ function CurriculumTreeView({
               <Text strong style={{ fontSize: 15, color: "#722ed1" }}>
                 {sub.name}
               </Text>
-              <Tag color={sub.isActive === false ? "error" : "success"}>
+              <Tag color={sub.isActive === false ? "error" : "success"} style={{ backgroundColor: sub.isActive === false ? '#fff2f0' : '#f6ffed' }}>
                 {sub.isActive === false ? "Blocked" : "Active"}
               </Tag>
             </div>
@@ -1386,7 +1386,7 @@ export default function Curriculum() {
           >
             {subject.name}
           </span>
-          <Tag color={isBlocked ? "error" : "success"} style={{ flexShrink: 0 }}>
+          <Tag color={isBlocked ? "error" : "success"} style={{ flexShrink: 0, backgroundColor: isBlocked ? '#fff2f0' : '#f6ffed' }}>
             {isBlocked ? "Blocked" : "Active"}
           </Tag>
         </div>

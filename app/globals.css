@@ -134,7 +134,7 @@ body {
   background-color: rgba(200, 138, 38, 0.22) !important;
   color: #F3D07B !important;
   font-weight: 600;
-  border-left: 3px solid #DDA035 !important;
+  /* border-left: 3px solid #DDA035 !important; */
 }
 
 .ant-layout-sider .ant-menu-dark .ant-menu-item-selected .anticon {
