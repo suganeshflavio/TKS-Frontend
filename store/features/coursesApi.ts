@@ -22,27 +22,9 @@ export type CourseItem = {
     subject: { id: string; name: string };
     class?: { id: string; name: string } | null;
   }[];
-  videos?: {
-    id: string;
-    order?: number;
-    isActive?: boolean;
-    video: { id: string; videoName: string; isActive?: boolean };
-    class?: { id: string; name: string } | null;
-  }[];
-  notes?: {
-    id: string;
-    order?: number;
-    isActive?: boolean;
-    notes: { id: string; title: string; isActive?: boolean };
-    class?: { id: string; name: string } | null;
-  }[];
-  mcqTests?: {
-    id: string;
-    order?: number;
-    isActive?: boolean;
-    test: { id: string; testName: string };
-    class?: { id: string; name: string } | null;
-  }[];
+  videos?: { order?: number; isActive?: boolean; video: { id: string; videoName: string; isActive?: boolean } }[];
+  notes?: { order?: number; isActive?: boolean; notes: { id: string; title: string; isActive?: boolean } }[];
+  mcqTests?: { order?: number; isActive?: boolean; test: { id: string; testName: string } }[];
 };
 
 export type PaginatedResponse<T> = {
@@ -156,56 +138,47 @@ export const coursesApi = appApi.injectEndpoints({
       }),
       invalidatesTags: ["Course"],
     }),
-    linkCourseVideo: builder.mutation<
-      unknown,
-      { courseId: string; videoId: string; classId?: string; order?: number }
-    >({
-      query: ({ courseId, videoId, classId, order }) => ({
+    linkCourseVideo: builder.mutation<unknown, { courseId: string; videoId: string; order?: number }>({
+      query: ({ courseId, videoId, order }) => ({
         url: `/courses/${courseId}/videos`,
         method: "POST",
-        body: { videoId, classId, order },
+        body: { videoId, order },
       }),
       invalidatesTags: ["Course"],
     }),
-    unlinkCourseVideo: builder.mutation<unknown, { courseId: string; linkId: string }>({
-      query: ({ courseId, linkId }) => ({
-        url: `/courses/${courseId}/videos/${linkId}`,
+    unlinkCourseVideo: builder.mutation<unknown, { courseId: string; videoId: string }>({
+      query: ({ courseId, videoId }) => ({
+        url: `/courses/${courseId}/videos/${videoId}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Course"],
     }),
-    linkCourseNotes: builder.mutation<
-      unknown,
-      { courseId: string; notesId: string; classId?: string; order?: number }
-    >({
-      query: ({ courseId, notesId, classId, order }) => ({
+    linkCourseNotes: builder.mutation<unknown, { courseId: string; notesId: string; order?: number }>({
+      query: ({ courseId, notesId, order }) => ({
         url: `/courses/${courseId}/notes`,
         method: "POST",
-        body: { notesId, classId, order },
+        body: { notesId, order },
       }),
       invalidatesTags: ["Course"],
     }),
-    unlinkCourseNotes: builder.mutation<unknown, { courseId: string; linkId: string }>({
-      query: ({ courseId, linkId }) => ({
-        url: `/courses/${courseId}/notes/${linkId}`,
+    unlinkCourseNotes: builder.mutation<unknown, { courseId: string; notesId: string }>({
+      query: ({ courseId, notesId }) => ({
+        url: `/courses/${courseId}/notes/${notesId}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Course"],
     }),
-    linkCourseMcqTest: builder.mutation<
-      unknown,
-      { courseId: string; testId: string; classId?: string; order?: number }
-    >({
-      query: ({ courseId, testId, classId, order }) => ({
+    linkCourseMcqTest: builder.mutation<unknown, { courseId: string; testId: string; order?: number }>({
+      query: ({ courseId, testId, order }) => ({
         url: `/courses/${courseId}/mcq-tests`,
         method: "POST",
-        body: { testId, classId, order },
+        body: { testId, order },
       }),
       invalidatesTags: ["Course"],
     }),
-    unlinkCourseMcqTest: builder.mutation<unknown, { courseId: string; linkId: string }>({
-      query: ({ courseId, linkId }) => ({
-        url: `/courses/${courseId}/mcq-tests/${linkId}`,
+    unlinkCourseMcqTest: builder.mutation<unknown, { courseId: string; testId: string }>({
+      query: ({ courseId, testId }) => ({
+        url: `/courses/${courseId}/mcq-tests/${testId}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Course"],
