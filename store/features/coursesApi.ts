@@ -22,6 +22,19 @@ export type CourseItem = {
     subject: { id: string; name: string };
     class?: { id: string; name: string } | null;
   }[];
+  topics?: {
+    id: string;
+    order?: number;
+    topic: {
+      id: string;
+      name: string;
+      chapter?: {
+        id: string;
+        name: string;
+        class?: { id: string; name: string; subject?: { id: string; name: string } } | null;
+      } | null;
+    };
+  }[];
   videos?: { order?: number; isActive?: boolean; video: { id: string; videoName: string; isActive?: boolean } }[];
   notes?: { order?: number; isActive?: boolean; notes: { id: string; title: string; isActive?: boolean } }[];
   mcqTests?: { order?: number; isActive?: boolean; test: { id: string; testName: string } }[];
@@ -138,6 +151,21 @@ export const coursesApi = appApi.injectEndpoints({
       }),
       invalidatesTags: ["Course"],
     }),
+    linkCourseTopic: builder.mutation<unknown, { courseId: string; topicId: string; order?: number }>({
+      query: ({ courseId, topicId, order }) => ({
+        url: `/courses/${courseId}/topics`,
+        method: "POST",
+        body: { topicId, order },
+      }),
+      invalidatesTags: ["Course"],
+    }),
+    unlinkCourseTopic: builder.mutation<unknown, { courseId: string; linkId: string }>({
+      query: ({ courseId, linkId }) => ({
+        url: `/courses/${courseId}/topics/${linkId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Course"],
+    }),
     linkCourseVideo: builder.mutation<unknown, { courseId: string; videoId: string; order?: number }>({
       query: ({ courseId, videoId, order }) => ({
         url: `/courses/${courseId}/videos`,
@@ -195,6 +223,8 @@ export const {
   usePermanentDeleteCourseMutation,
   useLinkCourseSubjectMutation,
   useUnlinkCourseSubjectMutation,
+  useLinkCourseTopicMutation,
+  useUnlinkCourseTopicMutation,
   useLinkCourseVideoMutation,
   useUnlinkCourseVideoMutation,
   useLinkCourseNotesMutation,

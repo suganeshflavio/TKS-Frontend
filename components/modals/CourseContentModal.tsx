@@ -8,16 +8,18 @@ import {
   useGetCourseByIdQuery,
   useLinkCourseMcqTestMutation,
   useLinkCourseNotesMutation,
-  useLinkCourseSubjectMutation,
+  useLinkCourseTopicMutation,
   useLinkCourseVideoMutation,
   useUnlinkCourseMcqTestMutation,
   useUnlinkCourseNotesMutation,
-  useUnlinkCourseSubjectMutation,
+  useUnlinkCourseTopicMutation,
   useUnlinkCourseVideoMutation,
   type CourseItem,
 } from "@/store/features/coursesApi";
 import { useGetSubjectsQuery } from "@/store/features/subjectsApi";
 import { useGetClassesQuery } from "@/store/features/classesApi";
+import { useGetChaptersQuery } from "@/store/features/chaptersApi";
+import { useGetTopicsQuery } from "@/store/features/topicsApi";
 import { useGetVideosQuery } from "@/store/features/videosApi";
 import { useGetNotesListQuery } from "@/store/features/notesApi";
 import { useGetTestsQuery } from "@/store/features/testsApi";
@@ -107,54 +109,68 @@ function LinkSection<T extends { id: string; label: string }>({
   );
 }
 
-type CourseSubjectLink = NonNullable<CourseItem["subjects"]>[number];
+type CourseTopicLink = NonNullable<CourseItem["topics"]>[number];
 
-function SubjectLinkSection({
+function topicContextLabel(topic: CourseTopicLink["topic"]) {
+  const chapter = topic.chapter;
+  if (!chapter) return null;
+  const klass = chapter.class;
+  if (!klass) return chapter.name;
+  const subjectPart = klass.subject ? ` · ${klass.subject.name}` : "";
+  return `${chapter.name} · ${klass.name}${subjectPart}`;
+}
+
+// Replaces the old flat "Subjects" link — a course now grants access by
+// linking specific Topics. The Subject/Class/Chapter selects below are
+// purely how you find the Topic; only the Topic itself gets linked.
+function TopicLinkSection({
   linked,
   subjectOptions,
   isLinking,
   onAdd,
   onRemove,
 }: {
-  linked: CourseSubjectLink[];
+  linked: CourseTopicLink[];
   subjectOptions: { id: string; label: string }[];
   isLinking: boolean;
-  onAdd: (subjectId: string, classId: string | undefined, order?: number) => void;
+  onAdd: (topicId: string, order?: number) => void;
   onRemove: (linkId: string) => void;
 }) {
   const [subjectId, setSubjectId] = useState<string | undefined>();
   const [classId, setClassId] = useState<string | undefined>();
+  const [chapterId, setChapterId] = useState<string | undefined>();
+  const [topicId, setTopicId] = useState<string | undefined>();
   const [order, setOrder] = useState<number | null>(null);
 
   const { data: classesData, isFetching: isLoadingClasses } = useGetClassesQuery(
     subjectId ? { subjectId, limit: 200 } : skipToken,
   );
-  const classOptions = classesData?.data ?? [];
-
-  const alreadyLinkedForSubject = useMemo(
-    () =>
-      linked
-        .filter((item) => item.subject.id === subjectId && item.class?.id)
-        .map((item) => item.class!.id),
-    [linked, subjectId],
+  const { data: chaptersData, isFetching: isLoadingChapters } = useGetChaptersQuery(
+    classId ? { classId, limit: 200 } : skipToken,
+  );
+  const { data: topicsData, isFetching: isLoadingTopics } = useGetTopicsQuery(
+    chapterId ? { chapterId, limit: 200 } : skipToken,
   );
 
-  const classSelectOptions = classOptions
-    .map((c) => ({ value: c.id, label: c.name }))
-    .filter((option) => !alreadyLinkedForSubject.includes(option.value));
+  const linkedTopicIds = useMemo(() => new Set(linked.map((item) => item.topic.id)), [linked]);
+  const topicSelectOptions = (topicsData?.data ?? [])
+    .filter((topic) => !linkedTopicIds.has(topic.id))
+    .map((topic) => ({ value: topic.id, label: topic.name }));
 
   const reset = () => {
     setSubjectId(undefined);
     setClassId(undefined);
+    setChapterId(undefined);
+    setTopicId(undefined);
     setOrder(null);
   };
 
   return (
     <div>
-      <Text strong>Subjects</Text>
+      <Text strong>Topics</Text>
       <div style={{ marginTop: 8 }}>
         {linked.length === 0 ? (
-          <Empty description="No subjects linked yet." image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <Empty description="No topics linked yet." image={Empty.PRESENTED_IMAGE_SIMPLE} />
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {linked.map((item) => (
@@ -162,9 +178,9 @@ function SubjectLinkSection({
                 key={item.id}
                 style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}
               >
-                <Space size={4}>
-                  <Tag>{item.subject.name}</Tag>
-                  <Tag color={item.class ? "blue" : "default"}>{item.class ? item.class.name : "All classes"}</Tag>
+                <Space size={4} wrap>
+                  <Tag>{item.topic.name}</Tag>
+                  {topicContextLabel(item.topic) && <Tag color="blue">{topicContextLabel(item.topic)}</Tag>}
                 </Space>
                 <Button
                   size="small"
@@ -182,7 +198,7 @@ function SubjectLinkSection({
         <Select
           showSearch
           allowClear
-          style={{ minWidth: 200 }}
+          style={{ minWidth: 160 }}
           placeholder="Subject"
           value={subjectId}
           options={subjectOptions.map((option) => ({ value: option.id, label: option.label }))}
@@ -190,25 +206,58 @@ function SubjectLinkSection({
           onChange={(value) => {
             setSubjectId(value);
             setClassId(undefined);
+            setChapterId(undefined);
+            setTopicId(undefined);
           }}
         />
         <Select
-          style={{ minWidth: 220 }}
+          showSearch
+          style={{ minWidth: 140 }}
           placeholder="Class"
           disabled={!subjectId}
           loading={isLoadingClasses}
           value={classId}
-          options={classSelectOptions}
-          onChange={(value) => setClassId(value)}
+          options={(classesData?.data ?? []).map((klass) => ({ value: klass.id, label: klass.name }))}
+          filterOption={(input, option) => (option?.label ?? "").toLowerCase().includes(input.toLowerCase())}
+          onChange={(value) => {
+            setClassId(value);
+            setChapterId(undefined);
+            setTopicId(undefined);
+          }}
+        />
+        <Select
+          showSearch
+          style={{ minWidth: 180 }}
+          placeholder="Chapter"
+          disabled={!classId}
+          loading={isLoadingChapters}
+          value={chapterId}
+          options={(chaptersData?.data ?? []).map((chapter) => ({ value: chapter.id, label: chapter.name }))}
+          filterOption={(input, option) => (option?.label ?? "").toLowerCase().includes(input.toLowerCase())}
+          onChange={(value) => {
+            setChapterId(value);
+            setTopicId(undefined);
+          }}
+        />
+        <Select
+          showSearch
+          style={{ minWidth: 180 }}
+          placeholder="Topic"
+          disabled={!chapterId}
+          loading={isLoadingTopics}
+          value={topicId}
+          options={topicSelectOptions}
+          filterOption={(input, option) => (option?.label ?? "").toLowerCase().includes(input.toLowerCase())}
+          onChange={(value) => setTopicId(value)}
         />
         <InputNumber placeholder="Order (optional)" value={order} onChange={(value) => setOrder(value)} />
         <Button
           type="primary"
           loading={isLinking}
-          disabled={!subjectId || !classId}
+          disabled={!topicId}
           onClick={() => {
-            if (subjectId && classId) {
-              onAdd(subjectId, classId, order ?? undefined);
+            if (topicId) {
+              onAdd(topicId, order ?? undefined);
               reset();
             }
           }}
@@ -228,8 +277,8 @@ export default function CourseContentModal({ open, courseId, courseName, onClose
   const { data: notesData } = useGetNotesListQuery({ page: 1, limit: 500 });
   const { data: testsData } = useGetTestsQuery({ page: 1, limit: 500 });
 
-  const [linkSubject, { isLoading: isLinkingSubject }] = useLinkCourseSubjectMutation();
-  const [unlinkSubject] = useUnlinkCourseSubjectMutation();
+  const [linkTopic, { isLoading: isLinkingTopic }] = useLinkCourseTopicMutation();
+  const [unlinkTopic] = useUnlinkCourseTopicMutation();
   const [linkVideo, { isLoading: isLinkingVideo }] = useLinkCourseVideoMutation();
   const [unlinkVideo] = useUnlinkCourseVideoMutation();
   const [linkNotes, { isLoading: isLinkingNotes }] = useLinkCourseNotesMutation();
@@ -283,14 +332,12 @@ export default function CourseContentModal({ open, courseId, courseName, onClose
     >
       {!courseId ? null : (
         <Space direction="vertical" size="large" style={{ width: "100%" }} styles={{ item: { width: "100%" } }}>
-          <SubjectLinkSection
-            linked={course?.subjects ?? []}
+          <TopicLinkSection
+            linked={course?.topics ?? []}
             subjectOptions={subjectOptions}
-            isLinking={isLinkingSubject}
-            onAdd={(subjectId, classId, order) =>
-              guard(linkSubject({ courseId, subjectId, classId, order }).unwrap(), "Subject linked.")
-            }
-            onRemove={(linkId) => guard(unlinkSubject({ courseId, linkId }).unwrap(), "Subject unlinked.")}
+            isLinking={isLinkingTopic}
+            onAdd={(topicId, order) => guard(linkTopic({ courseId, topicId, order }).unwrap(), "Topic linked.")}
+            onRemove={(linkId) => guard(unlinkTopic({ courseId, linkId }).unwrap(), "Topic unlinked.")}
           />
           <Divider style={{ margin: "4px 0" }} />
           <LinkSection
