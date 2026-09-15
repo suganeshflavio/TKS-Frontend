@@ -4,6 +4,7 @@ import "./globals.css";
 import "katex/dist/katex.min.css";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import ReduxProvider from "@/components/providers/ReduxProvider";
+import ThemeConfigProvider from "@/components/providers/ThemeConfigProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +33,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ReduxProvider>
-          <AntdRegistry>{children}</AntdRegistry>
+          <AntdRegistry>
+            <ThemeConfigProvider>{children}</ThemeConfigProvider>
+          </AntdRegistry>
         </ReduxProvider>
       </body>
     </html>

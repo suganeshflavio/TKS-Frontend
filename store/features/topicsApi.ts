@@ -160,6 +160,7 @@ export const topicsApi = appApi.injectEndpoints({
 
 export const {
   useGetTopicsQuery,
+  useLazyGetTopicsQuery,
   useCreateTopicMutation,
   useGetTopicByIdQuery,
   useUpdateTopicMutation,

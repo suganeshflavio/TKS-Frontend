@@ -107,6 +107,7 @@ export const chaptersApi = appApi.injectEndpoints({
 
 export const {
   useGetChaptersQuery,
+  useLazyGetChaptersQuery,
   useCreateChapterMutation,
   useGetChapterByIdQuery,
   useUpdateChapterMutation,

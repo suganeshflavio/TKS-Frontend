@@ -107,6 +107,7 @@ export const classesApi = appApi.injectEndpoints({
 
 export const {
   useGetClassesQuery,
+  useLazyGetClassesQuery,
   useCreateClassMutation,
   useGetClassByIdQuery,
   useUpdateClassMutation,
