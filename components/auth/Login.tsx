@@ -8,7 +8,7 @@ import { setCredentials } from "@/store/authSlice";
 import { useEffect } from "react";
 import Image from "next/image";
 
-const { Title, Text, Link } = Typography;
+const { Title, Text } = Typography;
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,7 +18,7 @@ export default function LoginPage() {
   const handleLogin = async (values: { email: string; password: string }) => {
     const email = values.email?.trim();
     const password = values.password?.trim();
-    const deviceId = "web"; // You can replace this with a unique device identifier if needed
+    const deviceId = "web";
     try {
       const response = await adminLogin({
         email,
@@ -54,7 +54,8 @@ export default function LoginPage() {
     <div
       style={{
         minHeight: "100vh",
-        background: "#f5f7fa",
+        width:"100%",
+        background: "radial-gradient(ellipse at 50% 20%, #0F3820 0%, #07190D 60%, #030C06 100%)",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
@@ -65,33 +66,50 @@ export default function LoginPage() {
         style={{
           width: "100%",
           maxWidth: 420,
-          borderRadius: 8,
-          boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+          borderRadius: 14,
+          border: "1px solid rgba(200, 138, 38, 0.25)",
+          borderTop: "4px solid #C88A26",
+          boxShadow: "0 24px 48px -12px rgba(0, 0, 0, 0.5)",
+          background: "#ffffff",
         }}
       >
-        <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <Image
-            src="/tks_academy_logo.png"
-            alt="TKS Academy logo"
-            width={100}
-            height={50}
-            preload
-            unoptimized
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div
             style={{
-              height: "auto",
-              borderRadius: 50,
-              margin: "0 auto 18px",
+              width: 84,
+              height: 84,
+              margin: "0 auto 16px",
+              borderRadius: "50%",
+              boxShadow: "0 8px 24px rgba(200, 138, 38, 0.3)",
+              border: "2px solid rgba(200, 138, 38, 0.4)",
+              overflow: "hidden",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#06180C",
             }}
-          />
-          {/* <Title level={2} style={{ color: '#40a3d8' }}>
-            TKS Academy
-          </Title> */}
+          >
+            <Image
+              src="/tks_academy_logo.png"
+              alt="TKS Academy logo"
+              width={84}
+              height={84}
+              unoptimized
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+              }}
+            />
+          </div>
 
-          <Title level={4} style={{ marginBottom: 8 }}>
-            Sign in with your account to continue
+          <Title level={3} style={{ margin: "0 0 4px", color: "#06180C", fontWeight: 700 }}>
+            TKS Academy
           </Title>
 
-          {/* <Text type="secondary">Sign in with your account to continue</Text> */}
+          <Text type="secondary" style={{ fontSize: 13 }}>
+            Admin Portal &bull; Sign in to continue
+          </Text>
         </div>
 
         <Form
@@ -112,7 +130,7 @@ export default function LoginPage() {
           >
             <Input
               size="large"
-              placeholder="Enter email"
+              placeholder="admin@tksacademy.com"
               autoComplete="email"
             />
           </Form.Item>
@@ -143,22 +161,16 @@ export default function LoginPage() {
             style={{
               height: 48,
               fontWeight: 600,
-              marginTop: 8,
+              fontSize: 15,
+              marginTop: 12,
+              background: "linear-gradient(135deg, #DDA035 0%, #C88A26 100%)",
+              border: "none",
+              boxShadow: "0 4px 14px rgba(200, 138, 38, 0.35)",
             }}
           >
             Sign in
           </Button>
         </Form>
-        {/* <Text
-          style={{
-            display: "block",
-            marginBottom: 16,
-            marginTop: 16,
-            textAlign: "center",
-          }}
-        >
-          Already have an account? <Link>Sign up</Link>
-        </Text> */}
       </Card>
     </div>
   );

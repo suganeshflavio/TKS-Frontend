@@ -24,3 +24,144 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Rich text editor / content (question, options, explanation) */
+.rte-content {
+  outline: none;
+  min-height: 1.5em;
+}
+
+.rte-content p {
+  margin: 0 0 4px;
+}
+
+.rte-content p:last-child {
+  margin-bottom: 0;
+}
+
+.rte-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #bfbfbf;
+  pointer-events: none;
+  height: 0;
+}
+
+.rte-content img,
+.rich-content img {
+  max-width: 100%;
+  max-height: 240px;
+  border-radius: 4px;
+}
+
+.rich-content p {
+  margin: 0 0 4px;
+}
+
+.rich-content p:last-child {
+  margin-bottom: 0;
+}
+
+.rte-math,
+.rich-content .rte-math {
+  display: inline-block;
+  padding: 0 2px;
+}
+
+/* Curriculum Tree View Layout */
+.curriculum-tree.ant-tree .ant-tree-treenode {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  padding: 4px 0 !important;
+}
+
+.curriculum-tree.ant-tree .ant-tree-node-content-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  padding: 2px 8px !important;
+  border-radius: 6px !important;
+}
+
+.curriculum-tree.ant-tree .ant-tree-node-content-wrapper:hover {
+  background-color: #f8fafc !important;
+}
+
+.curriculum-tree.ant-tree .ant-tree-title {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.curriculum-tree.ant-tree .ant-tree-switcher {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+/* ==========================================
+   TKS Academy Brand Theme (Forest Green & Rich Gold)
+   ========================================== */
+:root {
+  --brand-gold: #C88A26;
+  --brand-gold-hover: #DDA035;
+  --brand-gold-active: #A6731B;
+  --brand-gold-light: #FDF8ED;
+  --brand-gold-glow: rgba(200, 138, 38, 0.25);
+  --brand-green-darkest: #041108;
+  --brand-green-dark: #06180C;
+  --brand-green-medium: #0A2416;
+  --brand-green-surface: #0E351F;
+}
+
+/* Sidebar Dark Menu Items */
+.ant-layout-sider {
+  background: #06180C !important;
+}
+
+.ant-layout-sider .ant-menu-dark {
+  background: #06180C !important;
+}
+
+.ant-layout-sider .ant-menu-dark .ant-menu-sub {
+  background: #041108 !important;
+}
+
+.ant-layout-sider .ant-menu-dark .ant-menu-item-selected {
+  background-color: rgba(200, 138, 38, 0.22) !important;
+  color: #F3D07B !important;
+  font-weight: 600;
+  /* border-left: 3px solid #DDA035 !important; */
+}
+
+.ant-layout-sider .ant-menu-dark .ant-menu-item-selected .anticon {
+  color: #DDA035 !important;
+}
+
+.ant-layout-sider .ant-menu-dark .ant-menu-item:hover,
+.ant-layout-sider .ant-menu-dark .ant-menu-submenu-title:hover {
+  color: #F3D07B !important;
+}
+
+.ant-layout-sider-trigger {
+  background: #041208 !important;
+  color: #DDA035 !important;
+  border-top: 1px solid rgba(200, 138, 38, 0.2) !important;
+}
+
+.ant-layout-sider-trigger:hover {
+  background: #0A2416 !important;
+  color: #F3D07B !important;
+}
+
+/* Primary Button Styling */
+.ant-btn-primary {
+  box-shadow: 0 2px 6px rgba(200, 138, 38, 0.25) !important;
+}
+
+.ant-btn-primary:not(:disabled):hover {
+  box-shadow: 0 4px 12px rgba(200, 138, 38, 0.35) !important;
+}

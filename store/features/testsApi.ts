@@ -15,22 +15,12 @@ export type TestQuestion = {
 
 export type TestItem = {
   id: string;
-  videoId?: string;
   testName?: string;
   marksPerQuestion?: number;
   createdAt?: string;
   updatedAt?: string;
   questions?: TestQuestion[];
-  video?: {
-    id?: string;
-    videoName?: string;
-    subject?: string;
-    chapter?: string;
-    course?: {
-      id?: string;
-      courseName?: string;
-    };
-  };
+  topics?: { id?: string; name?: string }[];
   _count?: {
     questions?: number;
     attempts?: number;
@@ -88,13 +78,7 @@ export type TestAttemptItem = {
   video?: {
     id?: string;
     videoName?: string;
-    subject?: string;
-    chapter?: string;
-    course?: {
-      id?: string;
-      courseName?: string;
-    };
-  };
+  } | null;
   test?: {
     id?: string;
     testName?: string;
@@ -114,7 +98,7 @@ type TestQueryParams = {
   page?: number;
   limit?: number;
   search?: string;
-  videoId?: string;
+  topicId?: string;
 };
 
 type TestAttemptsQueryParams = {
@@ -136,7 +120,6 @@ const unwrapQuestion = (response: unknown): TestQuestion => {
 };
 
 type TestCreateRequest = {
-  videoId: string;
   testName: string;
   marksPerQuestion?: number;
   questions?: TestQuestion[];

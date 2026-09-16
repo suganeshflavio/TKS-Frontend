@@ -2,8 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  CheckCircleOutlined,
+  BookOutlined,
   CommentOutlined,
+  FileTextOutlined,
+  FormOutlined,
+  MailOutlined,
   ReadOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -14,9 +17,13 @@ import {
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import CoursePage from "@/components/layout/Course";
+import Curriculum from "@/components/layout/Curriculum";
 import Videos from "@/components/layout/Videos";
+import Notes from "@/components/layout/Notes";
+import McqTests from "@/components/layout/McqTests";
 import Userlist from "@/components/layout/Userlist";
 import Comments from "@/components/layout/Comments";
+import Enquiries from "@/components/layout/Enquiries";
 import Testimonials from "@/components/layout/Testimonials";
 // import PaymentList from "@/components/layout/PaymentList";
 import {
@@ -27,7 +34,6 @@ import {
   Grid,
   Layout,
   Menu,
-  Typography,
 } from "antd";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -54,19 +60,13 @@ function getItem(
 }
 
 const items: MenuItem[] = [
-  getItem("Course Details", "sub1", <ReadOutlined />, [
-    getItem("Add Course", "1", <ReadOutlined />),
-    getItem("Add Video", "2", <VideoCameraAddOutlined />),
-    // getItem("Add Mcq", "3", <CheckCircleOutlined />),
+  getItem("Content Library", "sub1", <BookOutlined />, [
+    getItem("Curriculum", "1", <ReadOutlined />),
+    getItem("Videos", "2", <VideoCameraAddOutlined />),
+    getItem("Notes", "3", <FileTextOutlined />),
+    getItem("MCQ Tests", "8", <FormOutlined />),
   ]),
-  // getItem("Claim Form", "1", <FormOutlined />),
-  // getItem("Claim Status", "2", <FileOutlined />),
-  //   getItem('User', 'sub1', <UserOutlined />, [
-  //     getItem('Tom', '3'),
-  //     getItem('Bill', '4'),
-  //     getItem('Alex', '5'),
-  //   ]),
-  // getItem("Approval Section", "3", <CheckCircleOutlined />),
+  getItem("Courses", "9", <ReadOutlined />),
   getItem("User Details", "sub2", <UserOutlined />, [
     getItem("User List", "4", <UserOutlined />),
     // getItem("Payment List", "5", <CreditCardOutlined />),
@@ -74,6 +74,7 @@ const items: MenuItem[] = [
   getItem("Engagement", "sub3", <CommentOutlined />, [
     getItem("Comments", "6", <CommentOutlined />),
     getItem("Testimonials", "7", <StarOutlined />),
+    getItem("Enquiries", "10", <MailOutlined />),
   ]),
 ];
 
@@ -86,7 +87,6 @@ const App: React.FC = () => {
   const screens = useBreakpoint();
   const [selectedMenu, setSelectedMenu] = useState("1");
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { Title } = Typography;
 
   useEffect(() => {
     const activeToken = token ?? getToken();
@@ -101,10 +101,19 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (selectedMenu) {
       case "1":
-        return <CoursePage />;
+        return <Curriculum />;
 
       case "2":
         return <Videos />;
+
+      case "3":
+        return <Notes />;
+
+      case "8":
+        return <McqTests />;
+
+      case "9":
+        return <CoursePage />;
 
       case "4":
         return <Userlist />;
@@ -115,14 +124,11 @@ const App: React.FC = () => {
       case "7":
         return <Testimonials />;
 
-      // case "5":
-      //   return <PaymentList />;
-
-      // case "3":
-      //   return <ApprovalSection claimsData={claimsData} refunction={fetchClaims} />;
+      case "10":
+        return <Enquiries />;
 
       default:
-        return <CoursePage />;
+        return <Curriculum />;
     }
   };
   const userMenu = {
@@ -151,55 +157,29 @@ const App: React.FC = () => {
     <>
       <div
         style={{
-          height: 80,
+          height: 88,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           padding: "16px",
+          borderBottom: "1px solid rgba(200, 138, 38, 0.2)",
+          background: "linear-gradient(180deg, #092414 0%, #06180C 100%)",
         }}
       >
-        {/* <img
-          src="/tks-academy-logo.svg"
-          alt="logo"
-          style={{
-            maxWidth: collapsed ? 70 : 120,
-            height: "auto",
-            transition: "all 0.3s",
-          }}
-        /> */}
-        {/* {collapsed ? (
-
-          <Image
-                      src="/tks_academy_logo.png"
-                      alt="TKS Academy logo"
-                      width={80}
-                      height={50}
-                      preload
-                      unoptimized
-                      style={{
-                        // height: "auto",
-                        // borderRadius: 50,
-                        // margin: "0 auto 18px",
-                        marginTop: 10,
-                      }}
-                    />
-        ) : ( */}
-
         <Image
           src="/tks_academy_logo.png"
           alt="TKS Academy logo"
-          width={80}
-          height={50}
+          width={collapsed ? 44 : 64}
+          height={collapsed ? 44 : 64}
           preload
           unoptimized
           style={{
-            // height: "auto",
-            // borderRadius: 50,
-            // margin: "0 auto 18px",
-            marginTop: 10,
+            borderRadius: "50%",
+            border: "2px solid rgba(200, 138, 38, 0.4)",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
+            transition: "all 0.3s ease",
           }}
         />
-        {/* )} */}
       </div>
 
       <Menu
@@ -208,6 +188,11 @@ const App: React.FC = () => {
         mode="inline"
         items={items}
         selectedKeys={[selectedMenu]}
+        style={{
+          background: "#06180C",
+          border: "none",
+          padding: "12px 6px",
+        }}
         onClick={({ key }) => setSelectedMenu(key)}
       />
     </>
@@ -217,7 +202,15 @@ const App: React.FC = () => {
     <Layout style={{ minHeight: "100vh" }}>
       {/* Desktop Sidebar */}
       {!isMobile && (
-        <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
+        <Sider
+          collapsible
+          collapsed={collapsed}
+          onCollapse={setCollapsed}
+          style={{
+            background: "#06180C",
+            borderRight: "1px solid rgba(200, 138, 38, 0.15)",
+          }}
+        >
           {SidebarContent}
         </Sider>
       )}
@@ -228,12 +221,42 @@ const App: React.FC = () => {
           placement="left"
           open={mobileOpen}
           onClose={() => setMobileOpen(false)}
+          styles={{
+            body: { background: "#06180C", padding: 0 },
+            header: {
+              background: "#06180C",
+              borderBottom: "1px solid rgba(200, 138, 38, 0.2)",
+            },
+          }}
         >
+          <div
+            style={{
+              height: 80,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "16px",
+              borderBottom: "1px solid rgba(200, 138, 38, 0.2)",
+            }}
+          >
+            <Image
+              src="/tks_academy_logo.png"
+              alt="TKS Academy logo"
+              width={56}
+              height={56}
+              unoptimized
+              style={{
+                borderRadius: "50%",
+                border: "2px solid rgba(200, 138, 38, 0.4)",
+              }}
+            />
+          </div>
           <Menu
+            theme="dark"
             mode="inline"
             items={items}
             selectedKeys={[selectedMenu]}
-            style={{ border: "none" }}
+            style={{ background: "#06180C", border: "none", padding: "12px 6px" }}
             onClick={({ key }) => {
               setSelectedMenu(key);
               setMobileOpen(false);
@@ -247,10 +270,12 @@ const App: React.FC = () => {
         <Header
           style={{
             background: "#fff",
-            padding: "0 20px",
+            padding: "0 24px",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            borderBottom: "1px solid #E5E7EB",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
           }}
         >
           {/* Left Side */}
@@ -276,9 +301,20 @@ const App: React.FC = () => {
                 gap: 10,
               }}
             >
-              <Avatar icon={<UserOutlined />} />
+              <Avatar
+                icon={<UserOutlined />}
+                style={{
+                  backgroundColor: "#06180C",
+                  color: "#DDA035",
+                  border: "1px solid rgba(200, 138, 38, 0.4)",
+                }}
+              />
 
-              {!isMobile && <span>{adminName}</span>}
+              {!isMobile && (
+                <span style={{ fontWeight: 500, color: "#1F2937" }}>
+                  {adminName ?? "Admin"}
+                </span>
+              )}
             </div>
           </Dropdown>
         </Header>
@@ -292,9 +328,11 @@ const App: React.FC = () => {
           <div
             style={{
               background: "#fff",
-              borderRadius: 8,
+              borderRadius: 12,
               padding: 24,
               minHeight: 630,
+              border: "1px solid #E5E7EB",
+              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.02)",
             }}
           >
             {/* Content Here */}

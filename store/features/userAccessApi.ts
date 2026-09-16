@@ -1,14 +1,26 @@
 import { appApi } from "../api";
 
-export type UserAccessSubjectDetail = {
-  subject: string;
-  chapters: string[];
+export type UserAccessVideoDetail = {
+  videoId: string;
+  videoName: string;
+};
+
+export type UserAccessNotesDetail = {
+  notesId: string;
+  title: string;
+};
+
+export type UserAccessMcqTestDetail = {
+  testId: string;
+  testName: string;
 };
 
 export type UserAccessCourseDetail = {
   courseId: string;
   courseName?: string;
-  subjects: UserAccessSubjectDetail[];
+  videos: UserAccessVideoDetail[];
+  notes: UserAccessNotesDetail[];
+  mcqTests: UserAccessMcqTestDetail[];
 };
 
 export type UserAccessDetail = {
@@ -21,14 +33,11 @@ export type UserAccessDetail = {
   courses?: UserAccessCourseDetail[];
 };
 
-export type SaveUserAccessSubject = {
-  subject: string;
-  chapters: string[];
-};
-
 export type SaveUserAccessCourse = {
   courseId: string;
-  subjects: SaveUserAccessSubject[];
+  videoIds: string[];
+  notesIds: string[];
+  testIds: string[];
 };
 
 export type SaveUserAccessRequest = {

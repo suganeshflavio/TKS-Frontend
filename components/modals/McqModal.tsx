@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import {
   Button,
   Card,
@@ -17,8 +17,9 @@ import {
 } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { useCreateTestMutation } from "@/store/features/testsApi";
+import RichTextEditor from "../common/RichTextEditor";
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 type McqQuestionDraft = {
   question: string;
@@ -40,8 +41,6 @@ interface Props {
   readonly open: boolean;
   readonly onCancel: () => void;
   readonly onSave?: (values: McqFormValues) => void;
-  readonly videoId?: string;
-  readonly videoName?: string;
 }
 
 const createDefaultQuestion = (): McqQuestionDraft => ({
@@ -58,20 +57,16 @@ export default function McqModal({
   open,
   onCancel,
   onSave,
-  videoId,
-  videoName,
 }: Props) {
   const [form] = Form.useForm<McqFormValues>();
   const [createTest, { isLoading: isCreating }] = useCreateTestMutation();
   const [step, setStep] = useState(0);
+  const [wasOpen, setWasOpen] = useState(false);
 
   const questions = Form.useWatch("questions", form) ?? [];
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
+  if (open && !wasOpen) {
+    setWasOpen(true);
     setStep(0);
     form.resetFields();
     form.setFieldsValue({
@@ -79,14 +74,11 @@ export default function McqModal({
       marksPerQuestion: 2,
       questions: [createDefaultQuestion()],
     });
-  }, [form, open]);
+  } else if (!open && wasOpen) {
+    setWasOpen(false);
+  }
 
   const handleFinish = async () => {
-    if (!videoId) {
-      message.error("Select a video before creating a test.");
-      return;
-    }
-
     const values = form.getFieldsValue(true) as McqFormValues;
     const testName = String(values.testName ?? "").trim();
     const marksPerQuestion = values.marksPerQuestion ?? 2;
@@ -117,7 +109,6 @@ export default function McqModal({
 
     try {
       await createTest({
-        videoId,
         testName,
         marksPerQuestion,
         questions: normalizedQuestions,
@@ -155,7 +146,7 @@ export default function McqModal({
 
   return (
     <Modal
-      title={videoName ? `Manage Test for ${videoName}` : "Manage Test"}
+      title="Create MCQ Test"
       open={open}
       maskClosable={false}
       onCancel={() => {
@@ -236,10 +227,7 @@ export default function McqModal({
                         name={[field.name, "question"]}
                         rules={[{ required: true, message: "Enter question" }]}
                       >
-                        <Input.TextArea
-                          rows={2}
-                          placeholder="What is the main language used in Flutter?"
-                        />
+                        <RichTextEditor placeholder="What is the main language used in Flutter?" />
                       </Form.Item>
 
                       <div
@@ -257,7 +245,7 @@ export default function McqModal({
                             { required: true, message: "Enter option A" },
                           ]}
                         >
-                          <Input placeholder="Java" />
+                          <RichTextEditor placeholder="Java" minHeight={44} />
                         </Form.Item>
                         <Form.Item
                           name={[field.name, "optionB"]}
@@ -266,7 +254,7 @@ export default function McqModal({
                             { required: true, message: "Enter option B" },
                           ]}
                         >
-                          <Input placeholder="Dart" />
+                          <RichTextEditor placeholder="Dart" minHeight={44} />
                         </Form.Item>
                         <Form.Item
                           name={[field.name, "optionC"]}
@@ -275,7 +263,7 @@ export default function McqModal({
                             { required: true, message: "Enter option C" },
                           ]}
                         >
-                          <Input placeholder="Python" />
+                          <RichTextEditor placeholder="Python" minHeight={44} />
                         </Form.Item>
                         <Form.Item
                           name={[field.name, "optionD"]}
@@ -284,7 +272,7 @@ export default function McqModal({
                             { required: true, message: "Enter option D" },
                           ]}
                         >
-                          <Input placeholder="Kotlin" />
+                          <RichTextEditor placeholder="Kotlin" minHeight={44} />
                         </Form.Item>
                       </div>
 
@@ -320,10 +308,7 @@ export default function McqModal({
                           name={[field.name, "explanation"]}
                           label="Explanation"
                         >
-                          <Input.TextArea
-                            rows={2}
-                            placeholder="Explain why this is correct"
-                          />
+                          <RichTextEditor placeholder="Explain why this is correct" />
                         </Form.Item>
                       </div>
                     </Card>

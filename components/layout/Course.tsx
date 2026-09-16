@@ -7,10 +7,7 @@ import {
   Popconfirm,
   Form,
   Input,
-  InputNumber,
   Modal,
-  Radio,
-  Select,
   Space,
   Table,
   Tabs,
@@ -24,6 +21,7 @@ import {
   EditOutlined,
   PlusOutlined,
   SearchOutlined,
+  SettingOutlined,
   StopOutlined,
 } from "@ant-design/icons";
 import { skipToken } from "@reduxjs/toolkit/query";
@@ -35,12 +33,12 @@ import {
   usePermanentDeleteCourseMutation,
   useUpdateCourseMutation,
 } from "@/store/features/coursesApi";
+import CourseContentModal from "../modals/CourseContentModal";
 
 const { Title, Text } = Typography;
 
 type CourseFormValues = {
   courseName: string;
-  subjects: string[];
   accessType?: "free" | "paid";
   paymentType?: "full" | "emi";
   price?: number;
@@ -137,6 +135,7 @@ export default function CoursePage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
   const [statusTab, setStatusTab] = useState<"active" | "blocked">("active");
+  const [contentModalCourse, setContentModalCourse] = useState<CourseItem | null>(null);
 
   const { data, isFetching, refetch } = useGetCoursesQuery({
     page,
@@ -174,9 +173,6 @@ export default function CoursePage() {
         courseDetail.name ??
         courseDetail.title ??
         "",
-      subjects:
-        courseDetail.subjects ??
-        (courseDetail.subject ? [courseDetail.subject] : []),
       accessType: courseDetail.accessType ?? "free",
       paymentType: courseDetail.paymentType,
       price: courseDetail.price,
@@ -193,13 +189,8 @@ export default function CoursePage() {
   };
 
   const onSubmit = async (values: CourseFormValues) => {
-    const cleanSubjects = values.subjects
-      .map((subject) => subject.trim())
-      .filter((subject) => subject.length > 0);
-
     const payload = {
       courseName: values.courseName.trim(),
-      subjects: cleanSubjects,
     };
 
     try {
@@ -265,36 +256,21 @@ export default function CoursePage() {
           <Text strong>
             {record.courseName ?? record.name ?? record.title ?? "-"}
           </Text>
-          {/* <Text type="secondary">ID: {record.id}</Text> */}
         </div>
       ),
     },
     {
-      title: "Subject",
-      key: "subject",
-      render: (_, record) => {
-        const subjects =
-          record.subjects ?? (record.subject ? [record.subject] : []);
-
-        return subjects.length > 0 ? subjects.join(", ") : "-";
-      },
-    },
-    // {
-    //   title: "Access",
-    //   key: "access",
-    //   render: (_, record) => (
-    //     <Space size={4}>
-    //       <Tag color={record.accessType === "paid" ? "blue" : "green"}>{record.accessType ?? "free"}</Tag>
-    //       {record.accessType === "paid" && record.paymentType ? <Tag>{record.paymentType}</Tag> : null}
-    //     </Space>
-    //   ),
-    // },
-    {
       title: "Action",
       key: "action",
-      // align: "right",
       render: (_, record) => (
         <Space wrap>
+          <Button
+            icon={<SettingOutlined />}
+            size="small"
+            onClick={() => setContentModalCourse(record)}
+          >
+            Manage Content
+          </Button>
           <Button
             icon={<EditOutlined />}
             color="primary"
@@ -349,9 +325,6 @@ export default function CoursePage() {
     },
   ];
 
-//   const accessType = Form.useWatch("accessType", form);
-//   const paymentType = Form.useWatch("paymentType", form);
-
   return (
     <Card style={{ borderRadius: 8 }}>
       <div
@@ -372,18 +345,14 @@ export default function CoursePage() {
               Courses List
             </Title>
             <Text type="secondary">
-              Search, paginate, create, and edit courses.
+              Search, paginate, create, and edit courses. Use &quot;Manage Content&quot; to link subjects, videos,
+              notes, and MCQ tests.
             </Text>
           </div>
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={() => {
-              form.setFieldsValue({
-                // accessType: "free",
-                // paymentType: "full",
-                subjects: [],
-              });
               setOpen(true);
             }}
           >
@@ -394,7 +363,7 @@ export default function CoursePage() {
         <Input
           allowClear
           prefix={<SearchOutlined />}
-          placeholder="Search course by name or subject"
+          placeholder="Search course by name"
           value={searchText}
           onChange={(event) => {
             setPage(1);
@@ -430,7 +399,7 @@ export default function CoursePage() {
               setLimit(nextPageSize);
             },
           }}
-          scroll={{ x: 1000 }}
+          scroll={{ x: 700 }}
         />
       </div>
 
@@ -447,9 +416,6 @@ export default function CoursePage() {
           form={form}
           layout="vertical"
           requiredMark={false}
-        //   initialValues={{
-        //     accessType: "paid",
-        //   }}
           onFinish={onSubmit}
         >
           <Form.Item
@@ -457,85 +423,17 @@ export default function CoursePage() {
             label="Course Name"
             rules={[{ required: true, message: "Course name is required." }]}
           >
-            <Input placeholder="Example: Class 10" />
+            <Input placeholder="Example: NEET Crash Course 2026" />
           </Form.Item>
-
-          <Form.Item
-            name="subjects"
-            label="Subjects"
-            rules={[
-              { required: true, message: "At least one subject is required." },
-            ]}
-          >
-            <Select
-              mode="tags"
-              placeholder="Type subject and press Enter (Example: Tamil, English, Maths)"
-              tokenSeparators={[","]}
-            />
-          </Form.Item>
-
-          {/* <Form.Item
-            name="accessType"
-            label="Access"
-            rules={[{ required: true, message: "Select access type." }]}
-          >
-            <Radio.Group
-              defaultValue={"paid"}
-              optionType="button"
-              buttonStyle="solid"
-              options={[
-                { label: "Free", value: "free", disabled: true },
-                { label: "Paid", value: "paid" },
-              ]}
-            />
-          </Form.Item> */}
-
-          {/* {accessType === "paid" ? (
-            <>
-              <Form.Item
-                name="paymentType"
-                label="Payment Type"
-                rules={[{ required: true, message: "Payment type is required." }]}
-              >
-                <Radio.Group
-                  optionType="button"
-                  buttonStyle="solid"
-                  options={[
-                    { label: "Full", value: "full" },
-                    { label: "EMI", value: "emi" },
-                  ]}
-                />
-              </Form.Item>
-
-              <Form.Item name="price" label="Price" rules={[{ required: true, message: "Price is required." }]}>
-                <InputNumber min={0} style={{ width: "100%" }} />
-              </Form.Item>
-
-              <Form.Item name="strikePrice" label="Strike Price">
-                <InputNumber min={0} style={{ width: "100%" }} />
-              </Form.Item>
-
-              <Form.Item
-                name="validityMonths"
-                label="Validity (months)"
-                rules={[{ required: true, message: "Validity is required." }]}
-              >
-                <InputNumber min={0} style={{ width: "100%" }} />
-              </Form.Item>
-
-              {paymentType === "emi" ? (
-                <Form.Item
-                  name="installments"
-                  label="Installments"
-                  rules={[{ required: true, message: "Installment count is required." }]}
-                >
-                  <InputNumber min={1} max={24} style={{ width: "100%" }} />
-                </Form.Item>
-              ) : null}
-            </>
-          ) : null} */}
         </Form>
       </Modal>
+
+      <CourseContentModal
+        open={!!contentModalCourse}
+        courseId={contentModalCourse?.id}
+        courseName={contentModalCourse?.courseName ?? contentModalCourse?.name ?? contentModalCourse?.title}
+        onClose={() => setContentModalCourse(null)}
+      />
     </Card>
   );
 }
