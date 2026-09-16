@@ -3,7 +3,7 @@ import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolk
 import { clearToken, getToken } from "./authStorage";
 import { logout } from "./authSlice";
 
-const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5000/api";
+const baseUrl = process.env.NEXT_API_BASE_URL ?? "http://localhost:5000/api";
 
 const rawBaseQuery = fetchBaseQuery({
   baseUrl,

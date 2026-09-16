@@ -196,9 +196,9 @@ export default function ManageTestModal({ open, testId, onClose }: Props) {
           <Card size="small">
             <Space style={{ display: "flex", justifyContent: "space-between", width: "100%" }} align="center" wrap>
               <Text strong>Questions</Text>
-              <Button type="dashed" onClick={() => void handleAddQuestion()} loading={isAddingQuestion}>
+              {/* <Button type="dashed" onClick={() => void handleAddQuestion()} loading={isAddingQuestion}>
                 Add Question
-              </Button>
+              </Button> */}
             </Space>
             <div style={{ marginTop: 12, display: "grid", gap: 12 }}>
               {questions.length === 0 ? (
