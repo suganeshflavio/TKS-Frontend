@@ -16,6 +16,7 @@ import {
 import { useGetVideosQuery } from "@/store/features/videosApi";
 import { useGetTestsQuery } from "@/store/features/testsApi";
 import { useGetNotesListQuery } from "@/store/features/notesApi";
+import { getErrorMessage } from "@/utils/error";
 
 const { Text } = Typography;
 
@@ -142,7 +143,7 @@ export default function TopicContentModal({ open, topicId, topicName, onClose }:
   const guard = (promise: Promise<unknown>, successMessage: string) =>
     promise
       .then(() => message.success(successMessage))
-      .catch((error: unknown) => message.error((error as Error)?.message || "Something went wrong."));
+      .catch((error: unknown) => message.error(getErrorMessage(error, "Something went wrong.")));
 
   return (
     <Modal

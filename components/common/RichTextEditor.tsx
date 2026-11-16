@@ -19,6 +19,7 @@ import type { EditorView } from "@tiptap/pm/view";
 import { MathInline } from "./mathExtension";
 import FormulaEditorModal from "./FormulaEditorModal";
 import { useUploadInlineImageMutation } from "@/store/features/uploadsApi";
+import { getErrorMessage } from "@/utils/error";
 
 const SYMBOLS = [
   "±", "×", "÷", "√", "∞", "π", "θ", "Δ", "Σ", "∫",
@@ -156,7 +157,7 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
         const result = await uploadInlineImage(file).unwrap();
         editor.chain().focus().setImage({ src: result.url }).run();
       } catch (error: unknown) {
-        message.error((error as Error)?.message || "Unable to upload image.");
+        message.error(getErrorMessage(error, "Unable to upload image."));
       }
     },
     [editor, uploadInlineImage],

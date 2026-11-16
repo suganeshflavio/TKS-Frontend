@@ -18,6 +18,7 @@ import {
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { useCreateTestMutation } from "@/store/features/testsApi";
 import RichTextEditor from "../common/RichTextEditor";
+import { getErrorMessage } from "@/utils/error";
 
 const { Text } = Typography;
 
@@ -119,7 +120,7 @@ export default function McqModal({
       form.resetFields();
       onCancel();
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to create test.");
+      message.error(getErrorMessage(error, "Unable to create test."));
     }
   };
 

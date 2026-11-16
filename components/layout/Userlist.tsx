@@ -49,6 +49,7 @@ import {
   useSaveUserAccessMutation,
   useUpdateUserAccessMutation,
 } from "@/store/features/userAccessApi";
+import { getErrorMessage } from "@/utils/error";
 const { Title, Text } = Typography;
 
 type UserFormValues = {
@@ -277,7 +278,7 @@ export default function Userlist() {
         }
       } catch (error: unknown) {
         if (!cancelled) {
-          message.error((error as Error)?.message || "Unable to load course content.");
+          message.error(getErrorMessage(error, "Unable to load course content."));
         }
       } finally {
         if (!cancelled) {
@@ -441,7 +442,7 @@ export default function Userlist() {
       resetModal();
       refetch();
     } catch(error:unknown) {
-      message.error((error as Error)?.message || "Unable to save user.");
+      message.error(getErrorMessage(error, "Unable to save user."));
     }
   };
 
@@ -455,7 +456,7 @@ export default function Userlist() {
       message.success(`User ${nextActive ? "unblocked" : "blocked"} successfully.`);
       refetch();
     } catch(error:unknown) {
-      message.error((error as Error)?.message || "Unable to update user status.");
+      message.error(getErrorMessage(error, "Unable to update user status."));
     } finally {
       setStatusUpdatingId(null);
     }
@@ -468,7 +469,7 @@ export default function Userlist() {
       message.success("User deleted successfully.");
       refetch();
     } catch(error:unknown) {
-      message.error((error as Error)?.message || "Unable to delete user.");
+      message.error(getErrorMessage(error, "Unable to delete user."));
     } finally {
       setDeletingId(null);
     }
@@ -543,7 +544,7 @@ export default function Userlist() {
       resetAccessModal();
       refetch();
     } catch(error:unknown) {
-      message.error((error as Error)?.message || "Unable to save user access.");
+      message.error(getErrorMessage(error, "Unable to save user access."));
     }
   };
 

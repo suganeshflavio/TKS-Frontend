@@ -70,15 +70,9 @@ import {
   useUpdateTopicMutation,
 } from "@/store/features/topicsApi";
 import TopicContentModal from "../modals/TopicContentModal";
+import { getErrorMessage } from "@/utils/error";
 
 const { Title, Text } = Typography;
-
-type ApiError = {
-  data?: {
-    message?: string;
-  };
-  message?: string;
-};
 
 type SubjectModalState =
   | { mode: "create" }
@@ -1193,8 +1187,7 @@ export default function Curriculum() {
       setSubjectModal(null);
       refetchSubjects();
     } catch (error: unknown) {
-      const apiError = error as ApiError;
-      message.error(apiError.data?.message || apiError.message || "Unable to save subject.");
+      message.error(getErrorMessage(error, "Unable to save subject."));
     }
   };
 
@@ -1216,8 +1209,7 @@ export default function Curriculum() {
       }
       setClassModal(null);
     } catch (error: unknown) {
-      const apiError = error as ApiError;
-      message.error(apiError.data?.message || apiError.message || "Unable to save class.");
+      message.error(getErrorMessage(error, "Unable to save class."));
     }
   };
 
@@ -1239,8 +1231,7 @@ export default function Curriculum() {
       }
       setChapterModal(null);
     } catch (error: unknown) {
-      const apiError = error as ApiError;
-      message.error(apiError.data?.message || apiError.message || "Unable to save chapter.");
+      message.error(getErrorMessage(error, "Unable to save chapter."));
     }
   };
 
@@ -1263,8 +1254,7 @@ export default function Curriculum() {
       }
       setTopicModal(null);
     } catch (error: unknown) {
-      const apiError = error as ApiError;
-      message.error(apiError.data?.message || apiError.message || "Unable to save topic.");
+      message.error(getErrorMessage(error, "Unable to save topic."));
     }
   };
 
@@ -1276,8 +1266,7 @@ export default function Curriculum() {
       message.success(`Subject ${nextActive ? "unblocked" : "blocked"} successfully.`);
       refetchSubjects();
     } catch (error: unknown) {
-      const apiError = error as ApiError;
-      message.error(apiError.data?.message || apiError.message || "Unable to update subject status.");
+      message.error(getErrorMessage(error, "Unable to update subject status."));
     }
   };
 
@@ -1287,8 +1276,7 @@ export default function Curriculum() {
       await updateClass({ id: record.id, body: { isActive: nextActive } }).unwrap();
       message.success(`Class ${nextActive ? "unblocked" : "blocked"} successfully.`);
     } catch (error: unknown) {
-      const apiError = error as ApiError;
-      message.error(apiError.data?.message || apiError.message || "Unable to update class status.");
+      message.error(getErrorMessage(error, "Unable to update class status."));
     }
   };
 
@@ -1298,8 +1286,7 @@ export default function Curriculum() {
       await updateChapter({ id: record.id, body: { isActive: nextActive } }).unwrap();
       message.success(`Chapter ${nextActive ? "unblocked" : "blocked"} successfully.`);
     } catch (error: unknown) {
-      const apiError = error as ApiError;
-      message.error(apiError.data?.message || apiError.message || "Unable to update chapter status.");
+      message.error(getErrorMessage(error, "Unable to update chapter status."));
     }
   };
 
@@ -1309,8 +1296,7 @@ export default function Curriculum() {
       await updateTopic({ id: record.id, body: { isActive: nextActive } }).unwrap();
       message.success(`Topic ${nextActive ? "unblocked" : "blocked"} successfully.`);
     } catch (error: unknown) {
-      const apiError = error as ApiError;
-      message.error(apiError.data?.message || apiError.message || "Unable to update topic status.");
+      message.error(getErrorMessage(error, "Unable to update topic status."));
     }
   };
 
@@ -1321,8 +1307,7 @@ export default function Curriculum() {
       message.success("Subject deleted successfully.");
       refetchSubjects();
     } catch (error: unknown) {
-      const apiError = error as ApiError;
-      message.error(apiError.data?.message || apiError.message || "Unable to delete subject.");
+      message.error(getErrorMessage(error, "Unable to delete subject."));
     }
   };
 
@@ -1331,8 +1316,7 @@ export default function Curriculum() {
       await deleteClass(record.id).unwrap();
       message.success("Class deleted successfully.");
     } catch (error: unknown) {
-      const apiError = error as ApiError;
-      message.error(apiError.data?.message || apiError.message || "Unable to delete class.");
+      message.error(getErrorMessage(error, "Unable to delete class."));
     }
   };
 
@@ -1341,8 +1325,7 @@ export default function Curriculum() {
       await deleteChapter(record.id).unwrap();
       message.success("Chapter deleted successfully.");
     } catch (error: unknown) {
-      const apiError = error as ApiError;
-      message.error(apiError.data?.message || apiError.message || "Unable to delete chapter.");
+      message.error(getErrorMessage(error, "Unable to delete chapter."));
     }
   };
 
@@ -1351,8 +1334,7 @@ export default function Curriculum() {
       await deleteTopic(record.id).unwrap();
       message.success("Topic deleted successfully.");
     } catch (error: unknown) {
-      const apiError = error as ApiError;
-      message.error(apiError.data?.message || apiError.message || "Unable to delete topic.");
+      message.error(getErrorMessage(error, "Unable to delete topic."));
     }
   };
 

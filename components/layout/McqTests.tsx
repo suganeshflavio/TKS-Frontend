@@ -9,6 +9,7 @@ import McqModal from "../modals/McqModal";
 import ManageTestModal from "../modals/ManageTestModal";
 import LinkToTopicModal from "../modals/LinkToTopicModal";
 import TestAttemptsModal from "../modals/TestAttemptsModal";
+import { getErrorMessage } from "@/utils/error";
 
 const { Title, Text } = Typography;
 
@@ -42,7 +43,7 @@ export default function McqTests() {
       message.success("Test deleted successfully.");
       refetch();
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to delete test.");
+      message.error(getErrorMessage(error, "Unable to delete test."));
     } finally {
       setDeletingId(null);
     }

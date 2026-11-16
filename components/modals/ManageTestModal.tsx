@@ -14,6 +14,7 @@ import {
 } from "@/store/features/testsApi";
 import RichTextEditor from "../common/RichTextEditor";
 import RichContent from "../common/RichContent";
+import { getErrorMessage } from "@/utils/error";
 
 const { Text } = Typography;
 
@@ -67,7 +68,7 @@ export default function ManageTestModal({ open, testId, onClose }: Props) {
       message.success("Test updated successfully.");
       setEditingTest(false);
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to update test.");
+      message.error(getErrorMessage(error, "Unable to update test."));
     }
   };
 
@@ -89,7 +90,7 @@ export default function ManageTestModal({ open, testId, onClose }: Props) {
       await refetchTest();
       message.success("New question added.");
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to add question.");
+      message.error(getErrorMessage(error, "Unable to add question."));
     }
   };
 
@@ -101,7 +102,7 @@ export default function ManageTestModal({ open, testId, onClose }: Props) {
       await refetchTest();
       message.success("Question deleted successfully.");
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to delete question.");
+      message.error(getErrorMessage(error, "Unable to delete question."));
     }
   };
 
@@ -131,7 +132,7 @@ export default function ManageTestModal({ open, testId, onClose }: Props) {
       setEditingQuestionId(null);
       setDraftQuestion(null);
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to update question.");
+      message.error(getErrorMessage(error, "Unable to update question."));
     }
   };
 

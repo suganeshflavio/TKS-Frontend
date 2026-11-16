@@ -34,6 +34,7 @@ import {
   useUpdateCourseMutation,
 } from "@/store/features/coursesApi";
 import CourseContentModal from "../modals/CourseContentModal";
+import { getErrorMessage } from "@/utils/error";
 
 const { Title, Text } = Typography;
 
@@ -205,7 +206,7 @@ export default function CoursePage() {
       resetModal();
       refetch();
     } catch(error:unknown) {
-      message.error((error as Error)?.message || "Unable to save course.");
+      message.error(getErrorMessage(error, "Unable to save course."));
     }
   };
 
@@ -226,7 +227,7 @@ export default function CoursePage() {
       message.success(`Course ${nextActive ? "unblocked" : "blocked"} successfully.`);
       refetch();
     } catch(error) {
-      message.error((error as Error)?.message || "Unable to update course status.");
+      message.error(getErrorMessage(error, "Unable to update course status."));
     } finally {
       setStatusUpdatingId(null);
     }
@@ -241,7 +242,7 @@ export default function CoursePage() {
       message.success("Course deleted successfully.");
       refetch();
     } catch(error) {
-      message.error((error as Error)?.message || "Unable to delete course.");
+      message.error(getErrorMessage(error, "Unable to delete course."));
     } finally {
       setDeletingId(null);
     }

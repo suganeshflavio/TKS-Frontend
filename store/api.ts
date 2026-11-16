@@ -22,7 +22,10 @@ const baseQueryWithAuthHandling: BaseQueryFn<string | FetchArgs, unknown, FetchB
   async (args, api, extraOptions) => {
     const result = await rawBaseQuery(args, api, extraOptions);
 
-    if (result.error?.status === 401) {
+    const url = typeof args === "string" ? args : args.url;
+    const isLoginEndpoint = url.includes("/auth/admin/login");
+
+    if (result.error?.status === 401 && !isLoginEndpoint) {
       api.dispatch(logout());
       clearToken();
 

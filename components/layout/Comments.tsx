@@ -26,6 +26,7 @@ import {
   useGetCommentsQuery,
   useReplyToCommentMutation,
 } from "@/store/features/commentsApi";
+import { getErrorMessage } from "@/utils/error";
 
 const { Title, Text } = Typography;
 
@@ -188,7 +189,7 @@ export default function Comments() {
       message.success("Reply posted successfully.");
       resetReplyModal();
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to post reply.");
+      message.error(getErrorMessage(error, "Unable to post reply."));
     }
   };
 
@@ -198,7 +199,7 @@ export default function Comments() {
       await deleteComment(comment.id).unwrap();
       message.success("Comment deleted successfully.");
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to delete comment.");
+      message.error(getErrorMessage(error, "Unable to delete comment."));
     } finally {
       setDeletingId(null);
     }

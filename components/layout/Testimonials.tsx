@@ -23,6 +23,7 @@ import {
   useGetTestimonialsQuery,
   useUpdateTestimonialMutation,
 } from "@/store/features/testimonialsApi";
+import { getErrorMessage } from "@/utils/error";
 
 const { Title, Text } = Typography;
 
@@ -126,7 +127,7 @@ export default function Testimonials() {
       message.success("Testimonial updated successfully.");
       resetModal();
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to update testimonial.");
+      message.error(getErrorMessage(error, "Unable to update testimonial."));
     }
   };
 
@@ -138,7 +139,7 @@ export default function Testimonials() {
       await updateTestimonial({ id: record.id, body: { isActive: nextActive } }).unwrap();
       message.success(`Testimonial ${nextActive ? "unblocked" : "blocked"} successfully.`);
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to update testimonial status.");
+      message.error(getErrorMessage(error, "Unable to update testimonial status."));
     } finally {
       setStatusUpdatingId(null);
     }
@@ -150,7 +151,7 @@ export default function Testimonials() {
       await deleteTestimonial(record.id).unwrap();
       message.success("Testimonial deleted successfully.");
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to delete testimonial.");
+      message.error(getErrorMessage(error, "Unable to delete testimonial."));
     } finally {
       setDeletingId(null);
     }

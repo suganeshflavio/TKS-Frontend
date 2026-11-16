@@ -8,6 +8,7 @@ import {
   useLinkNotesToTopicMutation,
   useLinkVideoToTopicMutation,
 } from "@/store/features/topicsApi";
+import { getErrorMessage } from "@/utils/error";
 
 const { Text } = Typography;
 
@@ -61,7 +62,7 @@ export default function LinkToTopicModal({ open, kind, entityId, entityLabel, on
       message.success(`Linked to topic successfully.`);
       handleClose();
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to link to topic.");
+      message.error(getErrorMessage(error, "Unable to link to topic."));
     }
   };
 

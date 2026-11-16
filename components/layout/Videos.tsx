@@ -39,6 +39,7 @@ import {
   useUpdateVideoMutation,
 } from "@/store/features/videosApi";
 import LinkToTopicModal from "../modals/LinkToTopicModal";
+import { getErrorMessage } from "@/utils/error";
 
 const { Title, Text } = Typography;
 
@@ -238,7 +239,7 @@ export default function Videos() {
       resetModal();
       refetch();
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to save video.");
+      message.error(getErrorMessage(error, "Unable to save video."));
     }
   };
 
@@ -255,7 +256,7 @@ export default function Videos() {
       message.success(`Video ${nextActive ? "unblocked" : "blocked"} successfully.`);
       refetch();
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to update video status.");
+      message.error(getErrorMessage(error, "Unable to update video status."));
     } finally {
       setStatusUpdatingId(null);
     }
@@ -270,7 +271,7 @@ export default function Videos() {
       message.success("Video deleted successfully.");
       refetch();
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to delete video.");
+      message.error(getErrorMessage(error, "Unable to delete video."));
     } finally {
       setDeletingId(null);
     }
@@ -335,7 +336,7 @@ export default function Videos() {
       message.success("Video uploaded successfully.");
     } catch (error: unknown) {
       onError?.(error as Error);
-      message.error((error as Error)?.message || "Unable to upload video.");
+      message.error(getErrorMessage(error, "Unable to upload video."));
     } finally {
       setIsUploadingVideo(false);
     }

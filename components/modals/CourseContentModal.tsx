@@ -23,6 +23,7 @@ import { useGetTopicsQuery } from "@/store/features/topicsApi";
 import { useGetVideosQuery } from "@/store/features/videosApi";
 import { useGetNotesListQuery } from "@/store/features/notesApi";
 import { useGetTestsQuery } from "@/store/features/testsApi";
+import { getErrorMessage } from "@/utils/error";
 
 const { Text } = Typography;
 
@@ -319,7 +320,7 @@ export default function CourseContentModal({ open, courseId, courseName, onClose
   const guard = (promise: Promise<unknown>, successMessage: string) =>
     promise
       .then(() => message.success(successMessage))
-      .catch((error: unknown) => message.error((error as Error)?.message || "Something went wrong."));
+      .catch((error: unknown) => message.error(getErrorMessage(error, "Something went wrong.")));
 
   return (
     <Modal

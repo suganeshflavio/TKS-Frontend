@@ -39,6 +39,7 @@ import {
   useUpdateNotesMutation,
 } from "@/store/features/notesApi";
 import LinkToTopicModal from "../modals/LinkToTopicModal";
+import { getErrorMessage } from "@/utils/error";
 
 const { Title, Text } = Typography;
 
@@ -190,7 +191,7 @@ export default function Notes() {
       resetModal();
       refetch();
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to save notes.");
+      message.error(getErrorMessage(error, "Unable to save notes."));
     }
   };
 
@@ -203,7 +204,7 @@ export default function Notes() {
       message.success(`Notes ${nextActive ? "unblocked" : "blocked"} successfully.`);
       refetch();
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to update notes status.");
+      message.error(getErrorMessage(error, "Unable to update notes status."));
     } finally {
       setStatusUpdatingId(null);
     }
@@ -216,7 +217,7 @@ export default function Notes() {
       message.success("Notes deleted successfully.");
       refetch();
     } catch (error: unknown) {
-      message.error((error as Error)?.message || "Unable to delete notes.");
+      message.error(getErrorMessage(error, "Unable to delete notes."));
     } finally {
       setDeletingId(null);
     }

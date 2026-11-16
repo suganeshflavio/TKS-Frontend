@@ -7,6 +7,7 @@ import { useAppDispatch } from "@/store/hooks";
 import { setCredentials } from "@/store/authSlice";
 import { useEffect } from "react";
 import Image from "next/image";
+import { getErrorMessage } from "@/utils/error";
 
 const { Title, Text } = Typography;
 
@@ -38,7 +39,7 @@ export default function LoginPage() {
       message.success("Login successful.");
       router.push("/dashboard");
     } catch (error: unknown) {
-      message.error(error instanceof Error ? error.message : "Invalid credentials");
+      message.error(getErrorMessage(error, "Invalid credentials"));
     }
   };
 
